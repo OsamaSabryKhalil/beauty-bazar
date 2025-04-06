@@ -111,12 +111,7 @@ export const seedAdmin = async () => {
     // Add your database seeding logic here
 };
 
-// ./routes.ts
-//This file is now mostly empty because routes are defined in the main server file.
-export const registerRoutes = async (app: any) => {
-    // Add your route registration logic here
-    return app;
-};
+// ./routes.ts has been moved to a separate file
 
 // ./vite.ts
 export const setupVite = async (app: any, server: any) => {
