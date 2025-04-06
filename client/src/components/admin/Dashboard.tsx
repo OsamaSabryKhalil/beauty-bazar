@@ -268,7 +268,7 @@ export default function Dashboard() {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={dashboardData.salesByCategory}
+                        data={isValidArray(dashboardData.salesByCategory) ? dashboardData.salesByCategory : []}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
@@ -277,9 +277,12 @@ export default function Dashboard() {
                         fill="#8884d8"
                         dataKey="value"
                       >
-                        {dashboardData.salesByCategory.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
+                        {isValidArray(dashboardData.salesByCategory) ?
+                          dashboardData.salesByCategory.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))
+                          : null
+                        }
                       </Pie>
                       <Tooltip formatter={(value, name) => [`${value}%`, name]} />
                       <Legend />
@@ -493,7 +496,7 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={dashboardData.salesByCategory}
+                      data={isValidArray(dashboardData.salesByCategory) ? dashboardData.salesByCategory : []}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
@@ -502,9 +505,12 @@ export default function Dashboard() {
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {dashboardData.salesByCategory.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
+                      {isValidArray(dashboardData.salesByCategory) ? 
+                        dashboardData.salesByCategory.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))
+                        : null
+                      }
                     </Pie>
                     <Tooltip formatter={(value, name) => [`${value}%`, name]} />
                     <Legend />
