@@ -1,11 +1,10 @@
 import { 
-  users, type User, type InsertUser, 
-  contacts, type Contact, type InsertContact,
-  products, type Product, type InsertProduct,
-  orders, type Order, type InsertOrder,
-  orderItems, type OrderItem, type InsertOrderItem
+  type User, type InsertUser, 
+  type Contact, type InsertContact,
+  type Product, type InsertProduct,
+  type Order, type InsertOrder,
+  type OrderItem, type InsertOrderItem
 } from "@shared/schema";
-import { eq } from "drizzle-orm";
 
 // Modify the interface with any CRUD methods you might need
 export interface IStorage {
@@ -223,14 +222,14 @@ export class MemStorage implements IStorage {
   }
 }
 
-// PostgreSQL Storage will be implemented later
-
-// Choose which storage implementation to use based on environment
-// For now, we'll stick with MemStorage until we're ready to switch to PostgreSQL
+// Import necessary modules for PostgreSQL implementation
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { neon } from '@neondatabase/serverless';
 import { eq } from 'drizzle-orm';
-import { users, products, orders, orderItems, contacts } from '@shared/schema';
+// Import schema tables for database operations
+import { 
+  users, products, orders, orderItems, contacts 
+} from '@shared/schema';
 
 /**
  * PostgreSQL implementation of the storage interface
@@ -440,5 +439,5 @@ export class DbStorage implements IStorage {
   }
 }
 
-// For now, use MemStorage until PostgreSQL implementation is stable
-export const storage = new MemStorage();
+// Use the PostgreSQL implementation for production
+export const storage = new DbStorage();

@@ -2,8 +2,8 @@ import type { Express, Request as ExpressRequest, Response, NextFunction } from 
 import { createServer, type Server } from "http";
 import { SessionData } from "express-session";
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
-import { createUser, login, verifyToken } from './auth'; // Import authentication functions
+import * as bcrypt from 'bcryptjs';
+import * as jwt from 'jsonwebtoken';
 
 // Extend Request to include session and user (for JWT)
 interface Request extends ExpressRequest {
@@ -11,8 +11,12 @@ interface Request extends ExpressRequest {
     userId?: number;
     destroy: (callback: (err?: any) => void) => void;
   };
-  user?: any; // Add user property for JWT authentication
+  user?: {
+    userId: number;
+    role: string;
+  }; // Add user property for JWT authentication
 }
+
 import { storage } from "./storage";
 import {
   contactSchema,
@@ -25,147 +29,326 @@ import {
 import { z } from "zod";
 
 const router = Router();
-const prisma = new PrismaClient();
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
+// JWT verification function
+function verifyToken(token: string) {
+  return jwt.verify(token, JWT_SECRET);
+}
 
 // Authentication middleware (JWT-based)
-const authMiddleware = async (req: any, res: any, next: any) => {
+const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) throw new Error('No token provided');
 
-    const decoded = verifyToken(token);
+    const decoded = verifyToken(token) as { userId: number; role: string };
     req.user = decoded;
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Unauthorized' });
+    const err = error as Error;
+    res.status(401).json({ error: 'Unauthorized', message: err.message });
   }
 };
 
 // Admin middleware
-const adminMiddleware = (req: any, res: any, next: any) => {
-  if (!req.user || req.user.role !== 'ADMIN') {
+const adminMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user || req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Admin access required' });
   }
   next();
 };
 
-
 // Auth routes
-router.post('/auth/register', async (req, res) => {
+router.post('/auth/register', async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-    const user = await createUser(email, password);
-    res.json(user);
+    // Validate request body
+    const userData = loginUserSchema.parse(req.body);
+    
+    // Check if user already exists
+    const existingUser = await storage.getUserByUsername(userData.username);
+    if (existingUser) {
+      return res.status(400).json({ error: 'Username already exists' });
+    }
+    
+    // Hash password
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+    
+    // Create user with default role (customer)
+    const newUser = await storage.createUser({
+      username: userData.username,
+      password: hashedPassword,
+      email: `${userData.username}@example.com`, // Using username as email for simplicity
+      role: "customer",
+      firstName: null,
+      lastName: null
+    });
+    
+    // Return user without password
+    const { password, ...userWithoutPassword } = newUser;
+    res.status(201).json(userWithoutPassword);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Invalid data', details: error.errors });
+    } else if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'An unknown error occurred' });
+    }
   }
 });
 
-router.post('/auth/login', async (req, res) => {
+router.post('/auth/login', async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-    const result = await login(email, password);
-    res.json(result);
+    // Validate request body
+    const userData = loginUserSchema.parse(req.body);
+    
+    // Find user
+    const user = await storage.getUserByUsername(userData.username);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(userData.password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
+    // Generate token
+    const token = jwt.sign(
+      { userId: user.id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+    
+    // Return user info and token
+    const { password, ...userWithoutPassword } = user;
+    res.json({
+      user: userWithoutPassword,
+      token
+    });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Invalid data', details: error.errors });
+    } else if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'An unknown error occurred' });
+    }
   }
 });
 
 // Product routes
-router.get('/products', async (req, res) => {
-  const products = await prisma.product.findMany();
-  res.json(products);
-});
-
-router.post('/products', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/products', async (req: Request, res: Response) => {
   try {
-    const product = await prisma.product.create({ data: req.body });
-    res.json(product);
+    const products = await storage.getProducts();
+    res.json(products);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Error fetching products:', error);
+    res.status(500).json({ error: 'Failed to fetch products' });
   }
 });
 
-router.put('/products/:id', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/products/:id', async (req: Request, res: Response) => {
   try {
-    const product = await prisma.product.update({
-      where: { id: parseInt(req.params.id) },
-      data: req.body,
-    });
+    const productId = parseInt(req.params.id);
+    const product = await storage.getProduct(productId);
+    
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    
     res.json(product);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Error fetching product:', error);
+    res.status(500).json({ error: 'Failed to fetch product' });
   }
 });
 
-router.delete('/products/:id', authMiddleware, adminMiddleware, async (req, res) => {
+router.post('/products', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
   try {
-    await prisma.product.delete({
-      where: { id: parseInt(req.params.id) },
-    });
+    const productData = insertProductSchema.parse(req.body);
+    const newProduct = await storage.createProduct(productData);
+    res.status(201).json(newProduct);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Invalid product data', details: error.errors });
+    } else if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'An unknown error occurred' });
+    }
+  }
+});
+
+router.put('/products/:id', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+  try {
+    const productId = parseInt(req.params.id);
+    const productData = insertProductSchema.partial().parse(req.body);
+    
+    const updatedProduct = await storage.updateProduct(productId, productData);
+    
+    if (!updatedProduct) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    
+    res.json(updatedProduct);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Invalid product data', details: error.errors });
+    } else if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'An unknown error occurred' });
+    }
+  }
+});
+
+router.delete('/products/:id', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+  try {
+    const productId = parseInt(req.params.id);
+    const deleted = await storage.deleteProduct(productId);
+    
+    if (!deleted) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    
     res.json({ success: true });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'An unknown error occurred' });
+    }
   }
 });
 
-// Order routes (adapted to use Prisma and JWT auth)
-router.get('/orders', authMiddleware, adminMiddleware, async (req, res) => {
-    try {
-      const orders = await prisma.order.findMany();
-      res.json(orders);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+// Order routes
+router.get('/orders', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+  try {
+    const orders = await storage.getOrders();
+    res.json(orders);
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ error: 'Failed to fetch orders' });
+  }
+});
+
+router.get('/orders/:id', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const orderId = parseInt(req.params.id);
+    const order = await storage.getOrder(orderId);
+    
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
     }
-  });
-  
-  router.get('/my-orders', authMiddleware, async (req, res) => {
-    try {
-      const orders = await prisma.order.findMany({ where: { userId: req.user.id } });
-      const ordersWithItems = await Promise.all(
-        orders.map(async (order) => {
-          const items = await prisma.orderItem.findMany({ where: { orderId: order.id } });
-          return { ...order, items };
+    
+    // Check if user has access (admin or order owner)
+    if (req.user?.role !== 'admin' && order.userId !== req.user?.userId) {
+      return res.status(403).json({ error: 'You do not have permission to access this order' });
+    }
+    
+    // Get order items
+    const orderItems = await storage.getOrderItems(orderId);
+    
+    res.json({
+      ...order,
+      items: orderItems
+    });
+  } catch (error) {
+    console.error('Error fetching order:', error);
+    res.status(500).json({ error: 'Failed to fetch order' });
+  }
+});
+
+router.get('/my-orders', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    const orders = await storage.getUserOrders(req.user.userId);
+    
+    // Get items for each order
+    const ordersWithItems = await Promise.all(
+      orders.map(async (order) => {
+        const items = await storage.getOrderItems(order.id);
+        return { ...order, items };
+      })
+    );
+    
+    res.json(ordersWithItems);
+  } catch (error) {
+    console.error('Error fetching user orders:', error);
+    res.status(500).json({ error: 'Failed to fetch your orders' });
+  }
+});
+
+router.post('/orders', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    // Validate order data
+    const orderData = insertOrderSchema.parse({
+      ...req.body,
+      userId: req.user.userId
+    });
+    
+    // Create order
+    const newOrder = await storage.createOrder(orderData);
+    
+    // Process order items if provided
+    if (req.body.items && Array.isArray(req.body.items)) {
+      await Promise.all(
+        req.body.items.map(async (item: any) => {
+          const orderItemData = insertOrderItemSchema.parse({
+            ...item,
+            orderId: newOrder.id
+          });
+          return storage.createOrderItem(orderItemData);
         })
       );
-      res.json({ orders: ordersWithItems });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
     }
-  });
-  
-  router.post('/orders', authMiddleware, async (req, res) => {
-    try {
-      const orderData = { ...req.body, userId: req.user.id };
-      const newOrder = await prisma.order.create({ data: orderData });
-      if (req.body.orderItems) {
-        const orderItems = await Promise.all(
-          req.body.orderItems.map(async (item: any) => {
-            return prisma.orderItem.create({ data: { ...item, orderId: newOrder.id } });
-          })
-        );
-      }
-      res.json(newOrder);
-    } catch (error) {
+    
+    res.status(201).json(newOrder);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Invalid order data', details: error.errors });
+    } else if (error instanceof Error) {
       res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'An unknown error occurred' });
     }
-  });
-  
-  router.patch('/orders/:id/status', authMiddleware, adminMiddleware, async (req, res) => {
-    try {
-      const { status } = req.body;
-      if (!status || !['pending', 'processing', 'completed', 'cancelled'].includes(status)) {
-        return res.status(400).json({ error: 'Invalid status' });
-      }
-      const updatedOrder = await prisma.order.update({
-        where: { id: parseInt(req.params.id) },
-        data: { status },
-      });
-      res.json(updatedOrder);
-    } catch (error) {
+  }
+});
+
+router.patch('/orders/:id/status', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+  try {
+    const orderId = parseInt(req.params.id);
+    const { status } = req.body;
+    
+    if (!status || !['pending', 'processing', 'completed', 'cancelled'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+    
+    const updatedOrder = await storage.updateOrderStatus(orderId, status);
+    
+    if (!updatedOrder) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    
+    res.json(updatedOrder);
+  } catch (error) {
+    if (error instanceof Error) {
       res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'An unknown error occurred' });
     }
-  });
+  }
+});
 
 
 //Contact Route

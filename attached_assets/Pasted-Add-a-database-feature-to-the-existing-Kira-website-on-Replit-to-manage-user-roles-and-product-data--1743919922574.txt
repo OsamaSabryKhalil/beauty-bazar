@@ -1,0 +1,13 @@
+Add a database feature to the existing Kira website on Replit to manage user roles and product data. Focus on creating the database and setting up two types of users: an admin user and a normal user. Here’s what to do:
+
+Database Creation: Set up a backend database to store and manage data for the website. The database should include:
+
+User Accounts: Define two user roles:
+
+Admin User: This user will have full control over the website, including adding, editing, or removing products and managing orders. Create an admin user account for me to test immediately. Provide the login credentials (e.g., username/email and password) so I can access the admin dashboard and try it out. The dashboard should be secure, simple, and visually consistent with the current girl-friendly design.
+Normal User: After I’ve tested the admin user, create a normal user account that can browse products, view details, and potentially make purchases (if e-commerce is added later). This user should also be able to create an account or log in to save preferences or leave feedback. Once the admin user is ready, provide instructions on how I can create and test this normal user account myself.
+Product Information: Include a section in the database to store details for each beauty product, such as name, description, price, image URL, and stock availability. This will allow the admin to manage products and normal users to view them.
+
+Security and Access: Ensure basic security measures are in place, such as password encryption and role-based access control, to protect the admin area and user data. Use a simple authentication system (e.g., username/email and password).
+
+Design and Compatibility: Keep the database interface and user login areas consistent with the current girl-friendly design, using the improved font format and color scheme. Ensure the feature is fully responsive and mobile-compatible, working smoothly on desktops, tablets, and smartphones, with adaptive layouts and clear navigation for girls.

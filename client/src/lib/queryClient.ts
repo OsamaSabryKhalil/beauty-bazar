@@ -1,5 +1,10 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// Extend the RequestInit type to handle our custom body types
+type RequestOptions = Omit<RequestInit, 'body'> & {
+  body?: any;
+};
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -7,20 +12,50 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
-  const res = await fetch(url, {
+export async function apiRequest<T = any>(
+  pathOrUrl: string,
+  options?: RequestOptions,
+): Promise<T> {
+  const method = options?.method || 'GET';
+  
+  const headers = {
+    ...(options?.headers || {})
+  } as Record<string, string>;
+
+  if (options?.body && !headers['Content-Type'] && !(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  const body = headers['Content-Type'] === 'application/json' && options?.body 
+    ? JSON.stringify(options.body) 
+    : options?.body;
+
+  // Create fetch options without duplicating properties
+  const { headers: _, body: __, ...restOptions } = options || {};
+  const fetchOptions: RequestInit = {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
+    headers,
+    body: body as BodyInit,
     credentials: "include",
-  });
+    ...restOptions
+  };
+  
+  const res = await fetch(pathOrUrl, fetchOptions);
 
   await throwIfResNotOk(res);
-  return res;
+  
+  // For HEAD or no content responses
+  if (method === 'HEAD' || res.status === 204) {
+    return {} as T;
+  }
+  
+  // Try to parse as JSON, fallback to text
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return res.json();
+  }
+  
+  return res.text() as unknown as T;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
