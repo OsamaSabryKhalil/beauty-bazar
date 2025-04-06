@@ -1,7 +1,20 @@
 import React from 'react';
 import { products } from '@/lib/data';
+import { useCart } from '@/contexts/CartContext';
+import { useToast } from '@/hooks/use-toast';
 
 const Products: React.FC = () => {
+  const { addToCart } = useCart();
+  const { toast } = useToast();
+  
+  const handleAddToCart = (product: any) => {
+    addToCart(product, 1);
+    toast({
+      title: "Added to cart",
+      description: `${product.name} has been added to your cart`,
+    });
+  };
+  
   return (
     <section id="products" className="py-16 md:py-24">
       <div className="container mx-auto px-4 md:px-6 lg:px-8">
@@ -37,8 +50,11 @@ const Products: React.FC = () => {
                       <span className="text-gray-400 text-sm line-through ml-2">${product.oldPrice.toFixed(2)}</span>
                     )}
                   </div>
-                  <button className="bg-kira-coral hover:bg-opacity-90 text-white font-heading text-sm font-medium px-4 py-2 rounded-full transition transform hover:scale-105">
-                    Buy Now
+                  <button 
+                    onClick={() => handleAddToCart(product)}
+                    className="bg-kira-coral hover:bg-opacity-90 text-white font-heading text-sm font-medium px-4 py-2 rounded-full transition transform hover:scale-105"
+                  >
+                    Add to Cart
                   </button>
                 </div>
               </div>

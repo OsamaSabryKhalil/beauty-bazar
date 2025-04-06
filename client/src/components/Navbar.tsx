@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import CartIcon from '@/components/CartIcon';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -50,7 +51,7 @@ const Navbar: React.FC = () => {
           </a>
           
           {/* Desktop Navigation */}
-          <div className="hidden md:flex space-x-8">
+          <div className="hidden md:flex items-center space-x-8">
             {navLinks.map((link) => (
               <a 
                 key={link.name}
@@ -61,18 +62,22 @@ const Navbar: React.FC = () => {
                 {link.name}
               </a>
             ))}
+            <CartIcon />
           </div>
           
-          {/* Mobile Menu Button */}
-          <button 
-            className="md:hidden text-kira-purple hover:text-kira-coral focus:outline-none" 
-            onClick={toggleMenu}
-            aria-label="Toggle menu"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
-            </svg>
-          </button>
+          {/* Mobile Menu Button and Cart Icon */}
+          <div className="flex items-center md:hidden space-x-4">
+            <CartIcon />
+            <button 
+              className="text-kira-purple hover:text-kira-coral focus:outline-none" 
+              onClick={toggleMenu}
+              aria-label="Toggle menu"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+            </button>
+          </div>
         </nav>
         
         {/* Mobile Navigation */}

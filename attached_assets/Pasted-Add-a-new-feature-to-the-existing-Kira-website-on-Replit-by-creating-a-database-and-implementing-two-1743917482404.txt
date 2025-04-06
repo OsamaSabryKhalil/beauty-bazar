@@ -1,0 +1,24 @@
+Add a new feature to the existing Kira website on Replit by creating a database and implementing two types of users: the site owner (admin) and regular users (customers) who can preview products and potentially buy them. Ensure this feature integrates seamlessly with the current design and maintains the site’s girl-friendly, responsive, and mobile-compatible nature. Here are the details:
+
+Database Creation: Set up a backend database to store and manage data for the website. The database should include:
+
+Product Information: Store details for each beauty product, such as name, description, price, image URL, and stock availability. This will allow the site owner to update or add new products and regular users to view and browse them.
+
+User Accounts: Define two user roles:
+
+Site Owner (Admin): This user should have full control over the website, including the ability to add, edit, or remove products, manage orders, and view analytics or user feedback. Create a secure admin dashboard or login area where the site owner can access these features. The dashboard should be simple, powerful, and visually consistent with the current girl-friendly design.
+Regular User (Customer): This user can browse all products, view details, and potentially make purchases (if e-commerce is added later). They should also be able to create an account or log in to save preferences, track orders, or leave feedback. The user experience should remain seamless, engaging, and tailored to girls, with clear calls-to-action and a friendly interface.
+Orders and Transactions: Include a basic system in the database to track orders placed by regular users, such as product selection, quantity, and user information. This can be expanded later for payment processing.
+
+User Interface Updates: Modify the front end to support this feature by adding:
+
+A login/signup page for both types of users, with separate access levels (admin vs. regular user). The design should be inviting, colorful, and consistent with the current girl-friendly aesthetic, including options to recover passwords or reset accounts.
+A "My Account" section for regular users to view their profile, saved products, or order history. For the site owner, this should link to the admin dashboard.
+Ensure regular users can preview all products without logging in, but actions like purchasing or saving items require registration. The site owner should have exclusive access to backend management tools.
+Security and Access: Implement basic security measures, such as password encryption and role-based access control, to protect the admin area and user data. Use a simple authentication system (e.g., username/email and password) that can be enhanced later.
+
+Design Consistency: Ensure the new features match the existing girl-friendly design, using soft colors (e.g., pinks, purples, pastels), trendy fonts, and imagery that appeals to a younger female audience. The database interface and user login areas should feel integrated and not disrupt the current aesthetic.
+
+Responsiveness and Mobile Compatibility: Make sure the new database features, login pages, and user interfaces are fully responsive and mobile-compatible. Use media queries, flexible layouts, and relative units to ensure they work smoothly on desktops, tablets, and smartphones. The navigation and forms should adapt seamlessly, with a hamburger menu on smaller screens if needed, designed to be intuitive and stylish for girls.
+
+This feature should enhance the existing Kira website without requiring major changes to the current structure, keeping it engaging and empowering for girls while adding functionality for both admins and customers.
