@@ -70,25 +70,25 @@ router.post('/auth/register', async (req: Request, res: Response) => {
       firstName: z.string().optional(),
       lastName: z.string().optional(),
     });
-    
+
     // Validate request body
     const userData = registrationSchema.parse(req.body);
-    
+
     // Check if username already exists
     const existingUser = await storage.getUserByUsername(userData.username);
     if (existingUser) {
       return res.status(400).json({ error: 'Username already exists' });
     }
-    
+
     // Check if email already exists
     const existingEmail = await storage.getUserByEmail(userData.email);
     if (existingEmail) {
       return res.status(400).json({ error: 'Email already exists' });
     }
-    
+
     // Hash password
     const hashedPassword = await bcrypt.hash(userData.password, 10);
-    
+
     // Create user with default role (customer)
     const newUser = await storage.createUser({
       username: userData.username,
@@ -98,7 +98,7 @@ router.post('/auth/register', async (req: Request, res: Response) => {
       firstName: userData.firstName || null,
       lastName: userData.lastName || null
     });
-    
+
     // Return user without password
     const { password, ...userWithoutPassword } = newUser;
     res.status(201).json(userWithoutPassword);
@@ -117,26 +117,26 @@ router.post('/auth/login', async (req: Request, res: Response) => {
   try {
     // Validate request body
     const userData = loginUserSchema.parse(req.body);
-    
+
     // Find user
     const user = await storage.getUserByUsername(userData.username);
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    
+
     // Verify password
     const isPasswordValid = await bcrypt.compare(userData.password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    
+
     // Generate token
     const token = jwt.sign(
       { userId: user.id, role: user.role },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
-    
+
     // Return user info and token
     const { password, ...userWithoutPassword } = user;
     res.json({
@@ -169,11 +169,11 @@ router.get('/products/:id', async (req: Request, res: Response) => {
   try {
     const productId = parseInt(req.params.id);
     const product = await storage.getProduct(productId);
-    
+
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
-    
+
     res.json(product);
   } catch (error) {
     console.error('Error fetching product:', error);
@@ -201,13 +201,13 @@ router.put('/products/:id', authMiddleware, adminMiddleware, async (req: Request
   try {
     const productId = parseInt(req.params.id);
     const productData = insertProductSchema.partial().parse(req.body);
-    
+
     const updatedProduct = await storage.updateProduct(productId, productData);
-    
+
     if (!updatedProduct) {
       return res.status(404).json({ error: 'Product not found' });
     }
-    
+
     res.json(updatedProduct);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -224,11 +224,11 @@ router.delete('/products/:id', authMiddleware, adminMiddleware, async (req: Requ
   try {
     const productId = parseInt(req.params.id);
     const deleted = await storage.deleteProduct(productId);
-    
+
     if (!deleted) {
       return res.status(404).json({ error: 'Product not found' });
     }
-    
+
     res.json({ success: true });
   } catch (error) {
     if (error instanceof Error) {
@@ -254,19 +254,19 @@ router.get('/orders/:id', authMiddleware, async (req: Request, res: Response) =>
   try {
     const orderId = parseInt(req.params.id);
     const order = await storage.getOrder(orderId);
-    
+
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
     }
-    
+
     // Check if user has access (admin or order owner)
     if (req.user?.role !== 'admin' && order.user_id !== req.user?.userId) {
       return res.status(403).json({ error: 'You do not have permission to access this order' });
     }
-    
+
     // Get order items
     const orderItems = await storage.getOrderItems(orderId);
-    
+
     res.json({
       ...order,
       items: orderItems
@@ -282,9 +282,9 @@ router.get('/my-orders', authMiddleware, async (req: Request, res: Response) => 
     if (!req.user?.userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
-    
+
     const orders = await storage.getUserOrders(req.user.userId);
-    
+
     // Get items for each order
     const ordersWithItems = await Promise.all(
       orders.map(async (order) => {
@@ -292,7 +292,7 @@ router.get('/my-orders', authMiddleware, async (req: Request, res: Response) => 
         return { ...order, items };
       })
     );
-    
+
     res.json(ordersWithItems);
   } catch (error) {
     console.error('Error fetching user orders:', error);
@@ -305,17 +305,17 @@ router.post('/orders', authMiddleware, async (req: Request, res: Response) => {
     if (!req.user?.userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
-    
+
     // Map the data to match our storage interface
     const orderData = {
       user_id: req.user.userId,
       status: req.body.status || "pending",
       total_amount: req.body.total_amount || req.body.totalAmount || 0
     };
-    
+
     // Create order
     const newOrder = await storage.createOrder(orderData);
-    
+
     // Process order items if provided
     if (req.body.items && Array.isArray(req.body.items)) {
       await Promise.all(
@@ -326,13 +326,13 @@ router.post('/orders', authMiddleware, async (req: Request, res: Response) => {
             quantity: item.quantity,
             price: item.price
           };
-          
+
           console.log('Creating order item:', orderItemData);
           return storage.createOrderItem(orderItemData);
         })
       );
     }
-    
+
     res.status(201).json(newOrder);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -349,17 +349,17 @@ router.patch('/orders/:id/status', authMiddleware, adminMiddleware, async (req: 
   try {
     const orderId = parseInt(req.params.id);
     const { status } = req.body;
-    
+
     if (!status || !['pending', 'processing', 'completed', 'cancelled'].includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
     }
-    
+
     const updatedOrder = await storage.updateOrderStatus(orderId, status);
-    
+
     if (!updatedOrder) {
       return res.status(404).json({ error: 'Order not found' });
     }
-    
+
     res.json(updatedOrder);
   } catch (error) {
     if (error instanceof Error) {
@@ -405,13 +405,13 @@ router.get('/user/profile', authMiddleware, async (req: Request, res: Response) 
     if (!req.user?.userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
-    
+
     const user = await storage.getUser(req.user.userId);
-    
+
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    
+
     // Return user without password
     const { password, ...userWithoutPassword } = user;
     res.json(userWithoutPassword);
@@ -426,17 +426,17 @@ router.put('/user/profile', authMiddleware, async (req: Request, res: Response) 
     if (!req.user?.userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
-    
+
     // Validate request body (partial update)
     const userData = insertUserSchema.partial().omit({ password: true }).parse(req.body);
-    
+
     // Update user
     const updatedUser = await storage.updateUser(req.user.userId, userData);
-    
+
     if (!updatedUser) {
       return res.status(404).json({ error: 'User not found' });
     }
-    
+
     // Return user without password
     const { password, ...userWithoutPassword } = updatedUser;
     res.json(userWithoutPassword);
@@ -456,33 +456,33 @@ router.put('/user/password', authMiddleware, async (req: Request, res: Response)
     if (!req.user?.userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
-    
+
     // Validate request body
     const { currentPassword, newPassword } = z.object({
       currentPassword: z.string().min(6, "Current password must be at least 6 characters"),
       newPassword: z.string().min(6, "New password must be at least 6 characters"),
     }).parse(req.body);
-    
+
     // Get current user
     const user = await storage.getUser(req.user.userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    
+
     // Verify current password
     const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Current password is incorrect' });
     }
-    
+
     // Hash and update new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     const updatedUser = await storage.updateUser(req.user.userId, { password: hashedPassword });
-    
+
     if (!updatedUser) {
       return res.status(404).json({ error: 'User not found' });
     }
-    
+
     res.json({ message: 'Password updated successfully' });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -507,12 +507,12 @@ router.get('/api/admin/dashboard', authMiddleware, adminMiddleware, async (req: 
 
     // Calculate total revenue from orders
     const totalRevenue = orders.reduce((sum, order) => sum + order.total_amount, 0);
-    
+
     // Calculate new users in the past 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const newUsers = users.filter(user => new Date(user.createdAt) > thirtyDaysAgo).length;
-    
+
     // Get recent orders (latest 5)
     const recentOrders = await Promise.all(
       orders.slice(0, 5).map(async (order) => {
@@ -522,36 +522,20 @@ router.get('/api/admin/dashboard', authMiddleware, adminMiddleware, async (req: 
           customer: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email : 'Unknown',
           date: new Date(order.created_at).toISOString().split('T')[0],
           status: order.status,
-
-
-// Admin Users Route
-router.get('/api/admin/users', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
-  try {
-    const users = await storage.getAllUsers();
-    // Return users without passwords
-    const safeUsers = users.map(({ password, ...user }) => user);
-    res.json(safeUsers);
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({ error: 'Failed to fetch users' });
-  }
-});
-
-
           total: order.total_amount
         };
       })
     );
-    
+
     // Create product sales data
     // In a real system, this would come from order_items, but for now we'll create estimates
     const orderItems = await Promise.all(
       orders.map(order => storage.getOrderItems(order.id))
     ).then(items => items.flat());
-    
+
     // Group order items by product and calculate sales and revenue
     const productSalesMap = new Map();
-    
+
     for (const item of orderItems) {
       const product = await storage.getProduct(item.product_id);
       if (product) {
@@ -564,35 +548,35 @@ router.get('/api/admin/users', authMiddleware, adminMiddleware, async (req: Requ
             revenue: 0
           });
         }
-        
+
         const productData = productSalesMap.get(productId);
         productData.sales += item.quantity;
         productData.revenue += item.quantity * item.price;
       }
     }
-    
+
     // Convert to array and sort by sales
     const topSellingProducts = Array.from(productSalesMap.values())
       .sort((a, b) => b.sales - a.sales)
       .slice(0, 5);
-    
+
     // Create category sales data
     const categoryMap = new Map();
-    
+
     for (const product of products) {
       const category = product.category || 'Uncategorized';
       if (!categoryMap.has(category)) {
         categoryMap.set(category, 0);
       }
-      
+
       // For each product, look up its sales in orderItems
       const productSales = orderItems
         .filter(item => item.product_id === product.id)
         .reduce((sum, item) => sum + item.quantity, 0);
-      
+
       categoryMap.set(category, categoryMap.get(category) + productSales);
     }
-    
+
     // Format category data for the pie chart
     const totalSales = Array.from(categoryMap.values()).reduce((sum, value) => sum + value, 0) || 1; // Avoid division by zero
     const salesByCategory = Array.from(categoryMap.entries())
@@ -600,18 +584,18 @@ router.get('/api/admin/users', authMiddleware, adminMiddleware, async (req: Requ
         name,
         value: Math.round((sales as number / totalSales) * 100)
       }));
-    
+
     // Generate monthly revenue data
     const currentYear = new Date().getFullYear();
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    
+
     // Group orders by month
     const monthlyRevenueMap = new Map();
-    
+
     for (const month of months) {
       monthlyRevenueMap.set(month, 0);
     }
-    
+
     for (const order of orders) {
       const orderDate = new Date(order.created_at);
       if (orderDate.getFullYear() === currentYear) {
@@ -619,16 +603,16 @@ router.get('/api/admin/users', authMiddleware, adminMiddleware, async (req: Requ
         monthlyRevenueMap.set(month, (monthlyRevenueMap.get(month) || 0) + order.total_amount);
       }
     }
-    
+
     const revenueByMonth = Array.from(monthlyRevenueMap.entries())
       .map(([name, revenue]) => ({ name, revenue }));
-    
+
     // Generate user growth data - for simplicity, we'll distribute evenly through the year
     const userGrowth = months.map((name, index) => ({
       name,
       users: Math.ceil(users.length * ((index + 1) / 12))
     }));
-    
+
     // Calculate growth percentages (just estimates for now)
     const revenueGrowth = orders.length > 0 ? 12.5 : 0;
     const orderGrowth = orders.length > 0 ? 8.3 : 0;
@@ -652,6 +636,19 @@ router.get('/api/admin/users', authMiddleware, adminMiddleware, async (req: Requ
     const err = error as Error;
     console.error('Dashboard error:', err);
     res.status(500).json({ error: 'Failed to retrieve dashboard data', message: err.message });
+  }
+}); // Added missing closing brace
+
+// Admin Users Route
+router.get('/api/admin/users', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+  try {
+    const users = await storage.getAllUsers();
+    // Return users without passwords
+    const safeUsers = users.map(({ password, ...user }) => user);
+    res.json(safeUsers);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
   }
 });
 
