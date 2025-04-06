@@ -3,6 +3,7 @@ import session from "express-session";
 import MemoryStore from "memorystore";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { seedAdmin } from "./auth"; // Added import for seedAdmin
 
 // Initialize session store
 const MemoryStoreSession = MemoryStore(session);
@@ -95,4 +96,36 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
   });
+
+  // Initialize admin user after server starts
+  seedAdmin().catch(console.error); //Added this line as instructed in changes
 })();
+
+
+// Placeholder files - these would need to be implemented in a real application
+// ./auth.ts
+export const seedAdmin = async () => {
+    console.log("Seeding admin user...");
+    // Add your database seeding logic here
+};
+
+// ./routes.ts
+export const registerRoutes = async (app: any) => {
+    // Add your route registration logic here
+    return app;
+};
+
+// ./vite.ts
+export const setupVite = async (app: any, server: any) => {
+    // Add your vite setup logic here
+    return;
+};
+
+export const serveStatic = (app: any) => {
+    // Add your static serving logic here
+    return;
+};
+
+export const log = (message: string) => {
+    console.log(message);
+};
