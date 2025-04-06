@@ -1,16 +1,21 @@
 
-import { PrismaClient, User, Role } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-export async function createUser(email: string, password: string, role: Role = Role.USER) {
+export async function createUser(email: string, password: string, role: string = "customer", username: string = "") {
   const hashedPassword = await bcrypt.hash(password, 10);
+  
+  // If username is not provided, use email as username
+  const finalUsername = username || email.split('@')[0];
+  
   return prisma.user.create({
     data: {
       email,
+      username: finalUsername,
       password: hashedPassword,
       role,
     },
@@ -33,11 +38,11 @@ export function verifyToken(token: string) {
 }
 
 export async function seedAdmin() {
-  const adminEmail = 'admin@kira.com';
+  const adminEmail = 'admin@example.com';
   const adminPassword = 'admin123';
   
   try {
-    await createUser(adminEmail, adminPassword, Role.ADMIN);
+    await createUser(adminEmail, adminPassword, "admin", "admin");
     console.log('Admin user created successfully');
   } catch (error) {
     console.log('Admin user already exists');

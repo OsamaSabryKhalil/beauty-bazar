@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { SessionData } from "express-session";
 import { Router } from 'express';
 import * as bcrypt from 'bcryptjs';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 // Extend Request to include session and user (for JWT)
 interface Request extends ExpressRequest {
@@ -245,7 +245,7 @@ router.get('/orders/:id', authMiddleware, async (req: Request, res: Response) =>
     }
     
     // Check if user has access (admin or order owner)
-    if (req.user?.role !== 'admin' && order.userId !== req.user?.userId) {
+    if (req.user?.role !== 'admin' && order.user_id !== req.user?.userId) {
       return res.status(403).json({ error: 'You do not have permission to access this order' });
     }
     
@@ -291,11 +291,12 @@ router.post('/orders', authMiddleware, async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
     
-    // Validate order data
-    const orderData = insertOrderSchema.parse({
-      ...req.body,
-      userId: req.user.userId
-    });
+    // Map the data to match our storage interface
+    const orderData = {
+      user_id: req.user.userId,
+      status: req.body.status || "pending",
+      total_amount: req.body.totalAmount
+    };
     
     // Create order
     const newOrder = await storage.createOrder(orderData);
@@ -304,10 +305,13 @@ router.post('/orders', authMiddleware, async (req: Request, res: Response) => {
     if (req.body.items && Array.isArray(req.body.items)) {
       await Promise.all(
         req.body.items.map(async (item: any) => {
-          const orderItemData = insertOrderItemSchema.parse({
-            ...item,
-            orderId: newOrder.id
-          });
+          const orderItemData = {
+            order_id: newOrder.id,
+            product_id: item.productId,
+            quantity: item.quantity,
+            price: item.price
+          };
+          
           return storage.createOrderItem(orderItemData);
         })
       );

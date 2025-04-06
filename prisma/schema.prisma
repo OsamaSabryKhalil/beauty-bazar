@@ -1,35 +1,68 @@
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
   id        Int      @id @default(autoincrement())
-  email     String   @unique
+  username  String   @unique(map: "users_username_unique")
   password  String
-  name      String?
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  email     String   @unique(map: "users_email_unique")
+  firstName String?  @map("first_name")
+  lastName  String?  @map("last_name")
+  role      String   @default("customer")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  orders    orders[]
+
+  @@map("users")
 }
 
 model Product {
-  id          Int      @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   name        String
   description String
   price       Float
-  imageUrl    String
-  stock       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  imageUrl    String        @map("image_url")
+  category    String
+  inStock     Boolean       @default(true) @map("in_stock")
+  quantity    Int           @default(0)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  order_items order_items[]
+
+  @@map("products")
 }
 
-enum Role {
-  USER
-  ADMIN
+model contacts {
+  id         Int      @id @default(autoincrement())
+  name       String
+  email      String
+  message    String
+  created_at DateTime @default(now()) @db.Timestamp(6)
+}
+
+model order_items {
+  id         Int      @id @default(autoincrement())
+  order_id   Int
+  product_id Int
+  quantity   Int
+  price      Float
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  orders     orders   @relation(fields: [order_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "order_items_order_id_orders_id_fk")
+  products   Product  @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "order_items_product_id_products_id_fk")
+}
+
+model orders {
+  id           Int           @id @default(autoincrement())
+  user_id      Int
+  status       String        @default("pending")
+  total_amount Float
+  created_at   DateTime      @default(now()) @db.Timestamp(6)
+  updated_at   DateTime      @default(now()) @db.Timestamp(6)
+  order_items  order_items[]
+  users        User          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "orders_user_id_users_id_fk")
 }

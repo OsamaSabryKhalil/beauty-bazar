@@ -1,12 +1,54 @@
-import { 
-  type User, type InsertUser, 
-  type Contact, type InsertContact,
-  type Product, type InsertProduct,
-  type Order, type InsertOrder,
-  type OrderItem, type InsertOrderItem,
-  users, products, orders, orderItems, contacts
-} from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { PrismaClient, User, Product } from '@prisma/client';
+// Define types for the database models
+type Contact = {
+  id: number;
+  name: string;
+  email: string;
+  message: string;
+  created_at: Date;
+}
+
+type Order = {
+  id: number;
+  user_id: number;
+  status: string;
+  total_amount: number;
+  created_at: Date;
+  updated_at: Date;
+}
+
+type OrderItem = {
+  id: number;
+  order_id: number;
+  product_id: number;
+  quantity: number;
+  price: number;
+  created_at: Date;
+}
+
+// Define types that match our Prisma models for insertion/updates
+export type InsertUser = Omit<User, 'id' | 'createdAt'>;
+export type InsertProduct = {
+  name: string;
+  description: string;
+  price: number;
+  imageUrl: string;
+  category: string;
+  inStock?: boolean;
+  quantity?: number;
+};
+export type InsertContact = Omit<Contact, 'id' | 'created_at'>;
+export type InsertOrder = {
+  user_id: number;
+  status?: string;
+  total_amount: number;
+};
+export type InsertOrderItem = {
+  order_id: number;
+  product_id: number;
+  quantity: number;
+  price: number;
+};
 
 // Modify the interface with any CRUD methods you might need
 export interface IStorage {
@@ -238,32 +280,24 @@ export class MemStorage implements IStorage {
   }
 }
 
-// Import necessary modules for PostgreSQL implementation
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import { neon } from '@neondatabase/serverless';
-
 /**
- * PostgreSQL implementation of the storage interface
+ * PostgreSQL implementation of the storage interface using Prisma
  */
 export class DbStorage implements IStorage {
-  private db: any;
+  private prisma: PrismaClient;
 
   constructor() {
-    // Connect to the database using the proper Neon client initialization
-    // Create a SQL executor with the DATABASE_URL
-    const sql = neon(process.env.DATABASE_URL!);
-    
-    // Create a drizzle client
-    this.db = drizzle(sql);
-    
-    console.log('Database connection initialized');
+    this.prisma = new PrismaClient();
+    console.log('Prisma database connection initialized');
   }
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
     try {
-      const results = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
-      return results[0];
+      const user = await this.prisma.user.findUnique({
+        where: { id }
+      });
+      return user || undefined;
     } catch (error) {
       console.error('Error getting user:', error);
       return undefined;
@@ -272,8 +306,10 @@ export class DbStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     try {
-      const results = await this.db.select().from(users).where(eq(users.username, username)).limit(1);
-      return results[0];
+      const user = await this.prisma.user.findFirst({
+        where: { username }
+      });
+      return user || undefined;
     } catch (error) {
       console.error('Error getting user by username:', error);
       return undefined;
@@ -282,8 +318,10 @@ export class DbStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     try {
-      const results = await this.db.select().from(users).where(eq(users.email, email)).limit(1);
-      return results[0];
+      const user = await this.prisma.user.findUnique({
+        where: { email }
+      });
+      return user || undefined;
     } catch (error) {
       console.error('Error getting user by email:', error);
       return undefined;
@@ -292,8 +330,9 @@ export class DbStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     try {
-      const results = await this.db.insert(users).values(user).returning();
-      return results[0];
+      return await this.prisma.user.create({
+        data: user as any
+      });
     } catch (error) {
       console.error('Error creating user:', error);
       throw error;
@@ -302,19 +341,10 @@ export class DbStorage implements IStorage {
   
   async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
     try {
-      // Add updatedAt to the update data
-      const updateData = { 
-        ...userData,
-        updatedAt: new Date() 
-      };
-      
-      const results = await this.db
-        .update(users)
-        .set(updateData)
-        .where(eq(users.id, id))
-        .returning();
-      
-      return results[0];
+      return await this.prisma.user.update({
+        where: { id },
+        data: userData as any
+      });
     } catch (error) {
       console.error('Error updating user:', error);
       return undefined;
@@ -324,8 +354,12 @@ export class DbStorage implements IStorage {
   // Contact methods
   async createContact(contact: InsertContact): Promise<Contact> {
     try {
-      const results = await this.db.insert(contacts).values(contact).returning();
-      return results[0];
+      const result = await this.prisma.$queryRaw`
+        INSERT INTO contacts (name, email, message)
+        VALUES (${contact.name}, ${contact.email}, ${contact.message})
+        RETURNING *
+      `;
+      return result[0] as Contact;
     } catch (error) {
       console.error('Error creating contact:', error);
       throw error;
@@ -335,7 +369,7 @@ export class DbStorage implements IStorage {
   // Product methods
   async getProducts(): Promise<Product[]> {
     try {
-      return await this.db.select().from(products);
+      return await this.prisma.product.findMany();
     } catch (error) {
       console.error('Error getting products:', error);
       return [];
@@ -344,8 +378,10 @@ export class DbStorage implements IStorage {
 
   async getProduct(id: number): Promise<Product | undefined> {
     try {
-      const results = await this.db.select().from(products).where(eq(products.id, id)).limit(1);
-      return results[0];
+      const product = await this.prisma.product.findUnique({
+        where: { id }
+      });
+      return product || undefined;
     } catch (error) {
       console.error('Error getting product:', error);
       return undefined;
@@ -354,8 +390,17 @@ export class DbStorage implements IStorage {
 
   async createProduct(product: InsertProduct): Promise<Product> {
     try {
-      const results = await this.db.insert(products).values(product).returning();
-      return results[0];
+      return await this.prisma.product.create({
+        data: {
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          imageUrl: product.imageUrl,
+          category: product.category,
+          inStock: product.inStock !== undefined ? product.inStock : true,
+          quantity: product.quantity !== undefined ? product.quantity : 0
+        }
+      });
     } catch (error) {
       console.error('Error creating product:', error);
       throw error;
@@ -364,16 +409,10 @@ export class DbStorage implements IStorage {
 
   async updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product | undefined> {
     try {
-      // Create update object with correct typing for updatedAt
-      const updateData = { ...product } as any;
-      updateData.updatedAt = new Date();
-      
-      const results = await this.db
-        .update(products)
-        .set(updateData)
-        .where(eq(products.id, id))
-        .returning();
-      return results[0];
+      return await this.prisma.product.update({
+        where: { id },
+        data: product as any
+      });
     } catch (error) {
       console.error('Error updating product:', error);
       return undefined;
@@ -382,11 +421,10 @@ export class DbStorage implements IStorage {
 
   async deleteProduct(id: number): Promise<boolean> {
     try {
-      const results = await this.db
-        .delete(products)
-        .where(eq(products.id, id))
-        .returning({ id: products.id });
-      return results.length > 0;
+      await this.prisma.product.delete({
+        where: { id }
+      });
+      return true;
     } catch (error) {
       console.error('Error deleting product:', error);
       return false;
@@ -396,7 +434,8 @@ export class DbStorage implements IStorage {
   // Order methods
   async getOrders(): Promise<Order[]> {
     try {
-      return await this.db.select().from(orders);
+      const results = await this.prisma.$queryRaw`SELECT * FROM orders`;
+      return results as Order[];
     } catch (error) {
       console.error('Error getting orders:', error);
       return [];
@@ -405,8 +444,8 @@ export class DbStorage implements IStorage {
 
   async getOrder(id: number): Promise<Order | undefined> {
     try {
-      const results = await this.db.select().from(orders).where(eq(orders.id, id)).limit(1);
-      return results[0];
+      const results = await this.prisma.$queryRaw`SELECT * FROM orders WHERE id = ${id}`;
+      return results[0] as Order | undefined;
     } catch (error) {
       console.error('Error getting order:', error);
       return undefined;
@@ -415,7 +454,8 @@ export class DbStorage implements IStorage {
 
   async getUserOrders(userId: number): Promise<Order[]> {
     try {
-      return await this.db.select().from(orders).where(eq(orders.userId, userId));
+      const results = await this.prisma.$queryRaw`SELECT * FROM orders WHERE user_id = ${userId}`;
+      return results as Order[];
     } catch (error) {
       console.error('Error getting user orders:', error);
       return [];
@@ -424,8 +464,12 @@ export class DbStorage implements IStorage {
 
   async createOrder(order: InsertOrder): Promise<Order> {
     try {
-      const results = await this.db.insert(orders).values(order).returning();
-      return results[0];
+      const result = await this.prisma.$queryRaw`
+        INSERT INTO orders (user_id, status, total_amount)
+        VALUES (${order.user_id}, ${order.status || 'pending'}, ${order.total_amount})
+        RETURNING *
+      `;
+      return result[0] as Order;
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;
@@ -434,18 +478,12 @@ export class DbStorage implements IStorage {
 
   async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {
     try {
-      // Create update object with correct typing
-      const updateData = { 
-        status: status as any, 
-        updatedAt: new Date() 
-      };
-      
-      const results = await this.db
-        .update(orders)
-        .set(updateData)
-        .where(eq(orders.id, id))
-        .returning();
-      return results[0];
+      const result = await this.prisma.$queryRaw`
+        UPDATE orders SET status = ${status}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${id}
+        RETURNING *
+      `;
+      return result[0] as Order;
     } catch (error) {
       console.error('Error updating order status:', error);
       return undefined;
@@ -455,10 +493,8 @@ export class DbStorage implements IStorage {
   // Order Item methods
   async getOrderItems(orderId: number): Promise<OrderItem[]> {
     try {
-      return await this.db
-        .select()
-        .from(orderItems)
-        .where(eq(orderItems.orderId, orderId));
+      const results = await this.prisma.$queryRaw`SELECT * FROM order_items WHERE order_id = ${orderId}`;
+      return results as OrderItem[];
     } catch (error) {
       console.error('Error getting order items:', error);
       return [];
@@ -467,8 +503,12 @@ export class DbStorage implements IStorage {
 
   async createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem> {
     try {
-      const results = await this.db.insert(orderItems).values(orderItem).returning();
-      return results[0];
+      const result = await this.prisma.$queryRaw`
+        INSERT INTO order_items (order_id, product_id, quantity, price)
+        VALUES (${orderItem.order_id}, ${orderItem.product_id}, ${orderItem.quantity}, ${orderItem.price})
+        RETURNING *
+      `;
+      return result[0] as OrderItem;
     } catch (error) {
       console.error('Error creating order item:', error);
       throw error;
