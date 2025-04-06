@@ -85,11 +85,26 @@ async function registerRoutes(app: express.Express): Promise<Server> {
     throw err;
   });
 
+  // Configure Vite in development mode
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
+
+  // Catch all routes and forward to Vite/React
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      next();
+    } else {
+      if (app.get("env") === "development") {
+        setupVite(app, server).then(() => next());
+      } else {
+        serveStatic(app);
+        next();
+      }
+    }
+  });
 
   const port = 5000;
   server.listen({
