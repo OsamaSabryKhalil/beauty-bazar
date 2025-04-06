@@ -1,7 +1,9 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import MemoryStore from "memorystore";
-import { setupVite, serveStatic, log } from "./vite";
+import path from "path";
+import fs from "fs";
+import { log } from "./vite";
 import { seedAdmin } from "./auth";
 import { Router } from 'express';
 import { createServer, type Server } from "http";
@@ -83,14 +85,34 @@ app.use((req, res, next) => {
     console.error(err);
   });
 
-  // Configure Vite in development mode
-  if (app.get("env") !== "production") {
-    await setupVite(app, server);
+  // Configure for production mode
+  if (process.env.NODE_ENV === "production") {
+    // In production, serve static files from dist directory
+    const distPath = path.join(process.cwd(), "dist");
+    console.log(`Serving static files from: ${distPath}`);
+    
+    if (fs.existsSync(distPath)) {
+      app.use(express.static(distPath));
+      
+      // Fallback route - serve index.html for client-side routing
+      app.get('*', (req, res) => {
+        const indexPath = path.join(distPath, 'index.html');
+        if (fs.existsSync(indexPath)) {
+          res.sendFile(indexPath);
+        } else {
+          res.status(404).send('Application not properly built');
+        }
+      });
+    } else {
+      console.warn(`Warning: Build directory not found at ${distPath}`);
+    }
   } else {
-    serveStatic(app);
+    // In development, use Vite's dev server
+    const { setupVite } = await import("./vite");
+    await setupVite(app, server);
   }
 
-  const port = 5000;
+  const port = process.env.PORT || 5000;
   server.listen({
     port,
     host: "0.0.0.0",

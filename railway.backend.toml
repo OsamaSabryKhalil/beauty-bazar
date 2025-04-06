@@ -9,5 +9,9 @@
   restartPolicyType = "on_failure"
   restartPolicyMaxRetries = 10
 
+[env]
+  NODE_ENV = "production"
+  PORT = "3000"
+
 [deploy.envs]
 vars = ["DATABASE_URL", "SESSION_SECRET", "PORT"] 

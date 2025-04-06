@@ -31,6 +31,11 @@ import { z } from "zod";
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
+// Health check endpoint for Railway
+router.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 // JWT verification function
 function verifyToken(token: string) {
   return jwt.verify(token, JWT_SECRET);
