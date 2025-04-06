@@ -57,14 +57,15 @@ const Cart: React.FC = () => {
       
       toast({
         title: "Order placed successfully!",
-        description: "Thank you for your purchase",
+        description: "Thank you for your purchase. You can view your order details in your account.",
+        variant: "success"
       });
       
       // Clear cart after successful order
       clearCart();
       
-      // Navigate to order confirmation or account page
-      navigate('/account');
+      // Navigate back to home page with success message
+      navigate('/');
     } catch (error) {
       console.error('Checkout error:', error);
       toast({
