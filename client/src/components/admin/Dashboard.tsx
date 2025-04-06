@@ -431,27 +431,34 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {dashboardData.topSellingProducts.map((product) => (
-                      <tr 
-                        key={product.id} 
-                        className="bg-white border-b hover:bg-gray-50"
-                      >
-                        <td className="px-6 py-4 font-medium text-gray-900">{product.name}</td>
-                        <td className="px-6 py-4">{product.sales}</td>
-                        <td className="px-6 py-4">${product.revenue.toFixed(2)}</td>
-                        <td className="px-6 py-4 w-1/4">
-                          <div className="flex items-center">
-                            <Progress 
-                              value={product.sales / dashboardData.topSellingProducts[0].sales * 100} 
-                              className="h-2" 
-                            />
-                            <span className="ml-2 text-xs">
-                              {(product.sales / dashboardData.topSellingProducts[0].sales * 100).toFixed(0)}%
-                            </span>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {isValidArray(dashboardData.topSellingProducts) ? 
+                      dashboardData.topSellingProducts.map((product) => (
+                        <tr 
+                          key={product.id} 
+                          className="bg-white border-b hover:bg-gray-50"
+                        >
+                          <td className="px-6 py-4 font-medium text-gray-900">{product.name}</td>
+                          <td className="px-6 py-4">{product.sales}</td>
+                          <td className="px-6 py-4">${product.revenue.toFixed(2)}</td>
+                          <td className="px-6 py-4 w-1/4">
+                            <div className="flex items-center">
+                              <Progress 
+                                value={product.sales / dashboardData.topSellingProducts[0].sales * 100} 
+                                className="h-2" 
+                              />
+                              <span className="ml-2 text-xs">
+                                {(product.sales / dashboardData.topSellingProducts[0].sales * 100).toFixed(0)}%
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                      : (
+                        <tr>
+                          <td colSpan={4} className="px-6 py-4 text-center text-gray-500">No product data available</td>
+                        </tr>
+                      )
+                    }
                   </tbody>
                 </table>
               </div>
@@ -538,27 +545,34 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {dashboardData.topSellingProducts.map((product) => (
-                      <tr 
-                        key={product.id} 
-                        className="bg-white border-b hover:bg-gray-50"
-                      >
-                        <td className="px-6 py-4 font-medium text-gray-900">{product.name}</td>
-                        <td className="px-6 py-4">{product.sales}</td>
-                        <td className="px-6 py-4">${product.revenue.toFixed(2)}</td>
-                        <td className="px-6 py-4 w-1/4">
-                          <div className="flex items-center">
-                            <Progress 
-                              value={product.sales / dashboardData.topSellingProducts[0].sales * 100} 
-                              className="h-2" 
-                            />
-                            <span className="ml-2 text-xs">
-                              {(product.sales / dashboardData.topSellingProducts[0].sales * 100).toFixed(0)}%
-                            </span>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {isValidArray(dashboardData.topSellingProducts) ? 
+                      dashboardData.topSellingProducts.map((product) => (
+                        <tr 
+                          key={product.id} 
+                          className="bg-white border-b hover:bg-gray-50"
+                        >
+                          <td className="px-6 py-4 font-medium text-gray-900">{product.name}</td>
+                          <td className="px-6 py-4">{product.sales}</td>
+                          <td className="px-6 py-4">${product.revenue.toFixed(2)}</td>
+                          <td className="px-6 py-4 w-1/4">
+                            <div className="flex items-center">
+                              <Progress 
+                                value={product.sales / dashboardData.topSellingProducts[0].sales * 100} 
+                                className="h-2" 
+                              />
+                              <span className="ml-2 text-xs">
+                                {(product.sales / dashboardData.topSellingProducts[0].sales * 100).toFixed(0)}%
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                      : (
+                        <tr>
+                          <td colSpan={4} className="px-6 py-4 text-center text-gray-500">No product data available</td>
+                        </tr>
+                      )
+                    }
                   </tbody>
                 </table>
               </div>
