@@ -7,6 +7,7 @@ import Home from "@/pages/Home";
 import Cart from "@/pages/Cart";
 import Login from "@/pages/Login";
 import AdminDashboard from "@/pages/admin";
+import AdminProfile from "@/pages/admin/profile";
 import { CartProvider } from "@/contexts/CartContext";
 
 function Router() {
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/cart" component={Cart} />
       <Route path="/login" component={Login} />
       <Route path="/admin" component={AdminDashboard} />
+      <Route path="/admin/profile" component={AdminProfile} />
       <Route component={NotFound} />
     </Switch>
   );

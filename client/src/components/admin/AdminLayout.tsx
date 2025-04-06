@@ -7,7 +7,8 @@ import {
   ShoppingBag,
   BarChart3,
   Users,
-  Settings
+  Settings,
+  UserCog
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -70,6 +71,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             >
               <Settings className="mr-2 h-5 w-5" />
               Settings
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-gray-600 hover:bg-pink-50 hover:text-pink-600"
+              onClick={() => setLocation('/admin/profile')}
+            >
+              <UserCog className="mr-2 h-5 w-5" />
+              My Profile
             </Button>
           </div>
           <div className="px-4 mt-8">

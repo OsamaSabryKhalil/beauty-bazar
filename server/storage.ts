@@ -13,6 +13,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined>;
   
   // Contact methods
   createContact(contact: InsertContact): Promise<Contact>;
@@ -106,6 +107,19 @@ export class MemStorage implements IStorage {
     const user: User = { ...userWithDefaults, id, createdAt };
     this.users.set(id, user);
     return user;
+  }
+  
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+    
+    const updatedUser: User = { 
+      ...user, 
+      ...userData 
+    };
+    
+    this.users.set(id, updatedUser);
+    return updatedUser;
   }
   
   // Contact methods
@@ -281,6 +295,27 @@ export class DbStorage implements IStorage {
     } catch (error) {
       console.error('Error creating user:', error);
       throw error;
+    }
+  }
+  
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    try {
+      // Add updatedAt to the update data
+      const updateData = { 
+        ...userData,
+        updatedAt: new Date() 
+      };
+      
+      const results = await this.db
+        .update(users)
+        .set(updateData)
+        .where(eq(users.id, id))
+        .returning();
+      
+      return results[0];
+    } catch (error) {
+      console.error('Error updating user:', error);
+      return undefined;
     }
   }
 

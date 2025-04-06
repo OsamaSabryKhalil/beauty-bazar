@@ -379,6 +379,102 @@ router.post('/contact', async (req: Request, res: Response) => {
     }
   });
 
+// User profile routes
+router.get('/user/profile', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    const user = await storage.getUser(req.user.userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Return user without password
+    const { password, ...userWithoutPassword } = user;
+    res.json(userWithoutPassword);
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ error: 'Failed to fetch user profile' });
+  }
+});
+
+router.put('/user/profile', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    // Validate request body (partial update)
+    const userData = insertUserSchema.partial().omit({ password: true }).parse(req.body);
+    
+    // Update user
+    const updatedUser = await storage.updateUser(req.user.userId, userData);
+    
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Return user without password
+    const { password, ...userWithoutPassword } = updatedUser;
+    res.json(userWithoutPassword);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Invalid user data', details: error.errors });
+    } else if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'An unknown error occurred' });
+    }
+  }
+});
+
+router.put('/user/password', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    // Validate request body
+    const { currentPassword, newPassword } = z.object({
+      currentPassword: z.string().min(6, "Current password must be at least 6 characters"),
+      newPassword: z.string().min(6, "New password must be at least 6 characters"),
+    }).parse(req.body);
+    
+    // Get current user
+    const user = await storage.getUser(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Verify current password
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+    
+    // Hash and update new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const updatedUser = await storage.updateUser(req.user.userId, { password: hashedPassword });
+    
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Invalid data', details: error.errors });
+    } else if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'An unknown error occurred' });
+    }
+  }
+});
+
 
 export async function registerRoutes(app: Express): Promise<Server> {
   app.use(router); // Use the new router
