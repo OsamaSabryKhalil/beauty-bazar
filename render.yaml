@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: beauty-bazar-backend
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: beauty-bazar-db
+          property: connectionString
+    plan: free
+
+  - type: web
+    name: beauty-bazar-frontend
+    env: node
+    buildCommand: cd client && npm install && npm run build
+    startCommand: cd client && npm run preview
+    envVars:
+      - key: VITE_API_URL
+        value: https://beauty-bazar-backend.onrender.com
+    plan: free
+
+databases:
+  - name: beauty-bazar-db
+    databaseName: beauty_bazar
+    user: beauty_bazar
+    plan: free 

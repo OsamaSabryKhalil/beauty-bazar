@@ -27,11 +27,7 @@ export function UsersManager() {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const response = await apiRequest('/api/admin/users');
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
-      const data = await response.json();
+      const data = await apiRequest<User[]>('/api/admin/users');
       setUsers(data);
       setError(null);
     } catch (err) {
