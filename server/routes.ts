@@ -522,6 +522,22 @@ router.get('/api/admin/dashboard', authMiddleware, adminMiddleware, async (req: 
           customer: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email : 'Unknown',
           date: new Date(order.created_at).toISOString().split('T')[0],
           status: order.status,
+
+
+// Admin Users Route
+router.get('/api/admin/users', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+  try {
+    const users = await storage.getAllUsers();
+    // Return users without passwords
+    const safeUsers = users.map(({ password, ...user }) => user);
+    res.json(safeUsers);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+
           total: order.total_amount
         };
       })

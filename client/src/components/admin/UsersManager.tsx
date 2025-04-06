@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,41 +53,21 @@ export function UsersManager() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   
-  // This would need a real API endpoint to fetch all users
-  // For now, we're using a simulated user list
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      // In a real implementation, this would be an API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Create sample users for display
-      const sampleUsers: User[] = [
-        {
-          id: 1,
-          username: 'customer',
-          email: 'customer@example.com',
-          firstName: 'Regular',
-          lastName: 'Customer',
-          role: 'customer',
-          createdAt: new Date('2023-01-15')
-        },
-        {
-          id: 2,
-          username: 'admin',
-          email: 'admin@kira.com',
-          firstName: 'Admin',
-          lastName: 'User',
-          role: 'admin',
-          createdAt: new Date('2023-01-01')
-        }
-      ];
-      
-      setUsers(sampleUsers);
+      const response = await apiRequest('/api/admin/users');
+      const data = await response.json();
+      setUsers(data);
       setIsLoading(false);
     } catch (err) {
       setError(err as Error);
       setIsLoading(false);
+      toast({
+        title: "Error",
+        description: "Failed to fetch users",
+        variant: "destructive"
+      });
     }
   };
   
@@ -118,7 +99,6 @@ export function UsersManager() {
     } else if (sortField === 'username' || sortField === 'email') {
       comparison = a[sortField].localeCompare(b[sortField]);
     } else {
-      // Default sorting by id
       comparison = a.id - b.id;
     }
     
