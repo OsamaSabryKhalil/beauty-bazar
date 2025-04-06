@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import CartIcon from '@/components/CartIcon';
+import { Link } from 'wouter';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -62,6 +63,9 @@ const Navbar: React.FC = () => {
                 {link.name}
               </a>
             ))}
+            <Link to="/login" className="nav-link font-heading text-kira-purple hover:text-kira-coral">
+              Login
+            </Link>
             <CartIcon />
           </div>
           
@@ -93,6 +97,13 @@ const Navbar: React.FC = () => {
                 {link.name}
               </a>
             ))}
+            <Link 
+              to="/login" 
+              className="block py-2 px-4 font-heading font-medium text-kira-purple hover:text-kira-coral hover:bg-kira-light rounded-lg transition-colors"
+              onClick={handleNavLinkClick}
+            >
+              Login
+            </Link>
           </div>
         </div>
       </div>
