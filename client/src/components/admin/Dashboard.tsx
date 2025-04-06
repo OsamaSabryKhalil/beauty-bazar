@@ -81,63 +81,20 @@ export default function Dashboard() {
     }
   });
 
-  // Mock data for demo purposes when real API is not available
-  const dashboardData: DashboardData = data || {
-    totalUsers: 126,
-    totalOrders: 284,
-    totalProducts: 58,
-    totalRevenue: 14850.75,
-    newUsers: 24,
-    revenueGrowth: 12.5,
-    orderGrowth: 8.3,
-    recentOrders: [
-      { id: 1, customer: 'Sarah Johnson', date: '2023-04-01', status: 'Delivered', total: 129.99 },
-      { id: 2, customer: 'Michael Chen', date: '2023-04-02', status: 'Processing', total: 79.50 },
-      { id: 3, customer: 'Emily Davis', date: '2023-04-03', status: 'Shipped', total: 199.95 },
-      { id: 4, customer: 'James Wilson', date: '2023-04-04', status: 'Pending', total: 49.99 },
-      { id: 5, customer: 'Sophia Martinez', date: '2023-04-05', status: 'Delivered', total: 159.75 }
-    ],
-    topSellingProducts: [
-      { id: 1, name: 'Moisture Repair Shampoo', sales: 156, revenue: 2340.00 },
-      { id: 2, name: 'Curl Defining Cream', sales: 142, revenue: 1988.00 },
-      { id: 3, name: 'Hair Growth Serum', sales: 121, revenue: 3025.00 },
-      { id: 4, name: 'Protective Style Spray', sales: 98, revenue: 1470.00 },
-      { id: 5, name: 'Scalp Treatment Oil', sales: 87, revenue: 1305.00 }
-    ],
-    salesByCategory: [
-      { name: 'Shampoo', value: 35 },
-      { name: 'Conditioner', value: 30 },
-      { name: 'Styling', value: 20 },
-      { name: 'Treatments', value: 15 }
-    ],
-    revenueByMonth: [
-      { name: 'Jan', revenue: 1200 },
-      { name: 'Feb', revenue: 1400 },
-      { name: 'Mar', revenue: 1100 },
-      { name: 'Apr', revenue: 1800 },
-      { name: 'May', revenue: 1600 },
-      { name: 'Jun', revenue: 2100 },
-      { name: 'Jul', revenue: 1900 },
-      { name: 'Aug', revenue: 2300 },
-      { name: 'Sep', revenue: 2500 },
-      { name: 'Oct', revenue: 2200 },
-      { name: 'Nov', revenue: 2700 },
-      { name: 'Dec', revenue: 3000 }
-    ],
-    userGrowth: [
-      { name: 'Jan', users: 75 },
-      { name: 'Feb', users: 82 },
-      { name: 'Mar', users: 87 },
-      { name: 'Apr', users: 90 },
-      { name: 'May', users: 97 },
-      { name: 'Jun', users: 102 },
-      { name: 'Jul', users: 105 },
-      { name: 'Aug', users: 110 },
-      { name: 'Sep', users: 115 },
-      { name: 'Oct', users: 120 },
-      { name: 'Nov', users: 125 },
-      { name: 'Dec', users: 126 }
-    ]
+  // Use actual data from API and provide empty defaults when data doesn't exist
+  const dashboardData: DashboardData = {
+    totalUsers: data?.totalUsers || 0,
+    totalOrders: data?.totalOrders || 0,
+    totalProducts: data?.totalProducts || 0,
+    totalRevenue: data?.totalRevenue || 0,
+    newUsers: data?.newUsers || 0,
+    revenueGrowth: data?.revenueGrowth || 0,
+    orderGrowth: data?.orderGrowth || 0,
+    recentOrders: Array.isArray(data?.recentOrders) && data?.recentOrders.length > 0 ? data.recentOrders : [],
+    topSellingProducts: Array.isArray(data?.topSellingProducts) && data?.topSellingProducts.length > 0 ? data.topSellingProducts : [],
+    salesByCategory: Array.isArray(data?.salesByCategory) && data?.salesByCategory.length > 0 ? data.salesByCategory : [],
+    revenueByMonth: Array.isArray(data?.revenueByMonth) && data?.revenueByMonth.length > 0 ? data.revenueByMonth : [],
+    userGrowth: Array.isArray(data?.userGrowth) && data?.userGrowth.length > 0 ? data.userGrowth : []
   };
 
   if (isLoading) {

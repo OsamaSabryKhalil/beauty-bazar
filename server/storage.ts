@@ -58,6 +58,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>; // Added method to get all users
   
   // Contact methods
   createContact(contact: InsertContact): Promise<Contact>;
@@ -164,6 +165,10 @@ export class MemStorage implements IStorage {
     
     this.users.set(id, updatedUser);
     return updatedUser;
+  }
+  
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
   }
   
   // Contact methods
@@ -348,6 +353,15 @@ export class DbStorage implements IStorage {
     } catch (error) {
       console.error('Error updating user:', error);
       return undefined;
+    }
+  }
+  
+  async getAllUsers(): Promise<User[]> {
+    try {
+      return await this.prisma.user.findMany();
+    } catch (error) {
+      console.error('Error getting all users:', error);
+      return [];
     }
   }
 
