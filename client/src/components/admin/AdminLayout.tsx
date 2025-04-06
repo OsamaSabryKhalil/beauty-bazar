@@ -7,19 +7,21 @@ import {
   ShoppingBag,
   BarChart3,
   Users,
-  Settings,
-  UserCog
+  UserCog,
+  Home
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    logout();
     setLocation('/login');
   };
 
@@ -33,48 +35,40 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <nav className="mt-6">
           <div className="px-4 space-y-2">
             <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-600 hover:bg-pink-50 hover:text-pink-600"
-              onClick={() => setLocation('/admin')}
+              variant={location === '/admin/dashboard' ? 'default' : 'ghost'}
+              className={`w-full justify-start ${location === '/admin/dashboard' ? 'bg-pink-600 text-white' : 'text-gray-600 hover:bg-pink-50 hover:text-pink-600'}`}
+              onClick={() => setLocation('/admin/dashboard')}
             >
               <BarChart3 className="mr-2 h-5 w-5" />
               Dashboard
             </Button>
             <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-600 hover:bg-pink-50 hover:text-pink-600"
+              variant={location === '/admin' ? 'default' : 'ghost'}
+              className={`w-full justify-start ${location === '/admin' ? 'bg-pink-600 text-white' : 'text-gray-600 hover:bg-pink-50 hover:text-pink-600'}`}
               onClick={() => setLocation('/admin')}
             >
               <Package className="mr-2 h-5 w-5" />
               Products
             </Button>
             <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-600 hover:bg-pink-50 hover:text-pink-600"
+              variant={location === '/admin/orders' ? 'default' : 'ghost'}
+              className={`w-full justify-start ${location === '/admin/orders' ? 'bg-pink-600 text-white' : 'text-gray-600 hover:bg-pink-50 hover:text-pink-600'}`}
               onClick={() => setLocation('/admin/orders')}
             >
               <ShoppingBag className="mr-2 h-5 w-5" />
               Orders
             </Button>
             <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-600 hover:bg-pink-50 hover:text-pink-600"
+              variant={location === '/admin/users' ? 'default' : 'ghost'}
+              className={`w-full justify-start ${location === '/admin/users' ? 'bg-pink-600 text-white' : 'text-gray-600 hover:bg-pink-50 hover:text-pink-600'}`}
               onClick={() => setLocation('/admin/users')}
             >
               <Users className="mr-2 h-5 w-5" />
               Users
             </Button>
             <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-600 hover:bg-pink-50 hover:text-pink-600"
-              onClick={() => setLocation('/admin/settings')}
-            >
-              <Settings className="mr-2 h-5 w-5" />
-              Settings
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-600 hover:bg-pink-50 hover:text-pink-600"
+              variant={location === '/admin/profile' ? 'default' : 'ghost'}
+              className={`w-full justify-start ${location === '/admin/profile' ? 'bg-pink-600 text-white' : 'text-gray-600 hover:bg-pink-50 hover:text-pink-600'}`}
               onClick={() => setLocation('/admin/profile')}
             >
               <UserCog className="mr-2 h-5 w-5" />
@@ -87,6 +81,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               className="w-full justify-start text-gray-600 hover:bg-pink-50 hover:text-pink-600"
               onClick={() => setLocation('/')}
             >
+              <Home className="mr-2 h-5 w-5" />
               View Store
             </Button>
             <Button
