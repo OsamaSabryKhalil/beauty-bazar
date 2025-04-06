@@ -174,8 +174,8 @@ export default function Dashboard() {
     : 0;
   
   // Calculate average order value
-  const averageOrderValue = dashboardData.totalOrders 
-    ? (dashboardData.totalRevenue / dashboardData.totalOrders).toFixed(2) 
+  const averageOrderValue = (dashboardData.totalOrders && dashboardData.totalRevenue)
+    ? ((dashboardData.totalRevenue || 0) / dashboardData.totalOrders).toFixed(2) 
     : "0.00";
 
   return (
@@ -217,8 +217,8 @@ export default function Dashboard() {
             />
             <StatsCard 
               title="Revenue" 
-              value={`$${dashboardData.totalRevenue.toLocaleString()}`} 
-              description={`${dashboardData.revenueGrowth}% increase`}
+              value={`$${dashboardData.totalRevenue ? dashboardData.totalRevenue.toLocaleString() : '0'}`} 
+              description={`${dashboardData.revenueGrowth || 0}% increase`}
               icon={<DollarSign className="h-6 w-6" />} 
               trend="up"
             />
@@ -348,12 +348,12 @@ export default function Dashboard() {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${dashboardData.totalRevenue.toLocaleString()}</div>
+                <div className="text-2xl font-bold">${dashboardData.totalRevenue ? dashboardData.totalRevenue.toLocaleString() : '0'}</div>
                 <p className="text-xs text-muted-foreground">
-                  +{dashboardData.revenueGrowth}% from last month
+                  +{dashboardData.revenueGrowth || 0}% from last month
                 </p>
                 <div className="mt-4 h-1">
-                  <Progress value={dashboardData.revenueGrowth} />
+                  <Progress value={dashboardData.revenueGrowth || 0} />
                 </div>
               </CardContent>
             </Card>
@@ -475,7 +475,7 @@ export default function Dashboard() {
             />
             <StatsCard 
               title="Product Revenue" 
-              value={`$${(dashboardData.totalRevenue).toLocaleString()}`} 
+              value={`$${dashboardData.totalRevenue ? dashboardData.totalRevenue.toLocaleString() : '0'}`} 
               description="From all products"
               icon={<DollarSign className="h-6 w-6" />} 
               trend="up"
@@ -572,7 +572,8 @@ export default function Dashboard() {
             />
             <StatsCard 
               title="Avg. Spend" 
-              value={`$${(dashboardData.totalRevenue / dashboardData.totalUsers).toFixed(2)}`} 
+              value={`$${(dashboardData.totalRevenue && dashboardData.totalUsers) ? 
+                (dashboardData.totalRevenue / dashboardData.totalUsers).toFixed(2) : '0.00'}`} 
               description="Per customer"
               icon={<DollarSign className="h-6 w-6" />} 
               trend="up"
