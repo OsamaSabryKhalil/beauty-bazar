@@ -35,10 +35,10 @@ const Cart: React.FC = () => {
       navigate('/login');
       return;
     }
-    
+
     try {
       setIsPending(true);
-      
+
       // Prepare order data
       const orderData = {
         total_amount: getCartTotal(),
@@ -48,24 +48,23 @@ const Cart: React.FC = () => {
           price: item.price
         }))
       };
-      
+
       // Create order in database
       const response = await apiRequest('/orders', {
         method: 'POST',
         body: orderData
       });
-      
+
       toast({
         title: "Order placed successfully!",
         description: "Thank you for your purchase. You can view your order details in your account.",
         variant: "success"
       });
-      
+
       // Clear cart after successful order
       clearCart();
-      
-      // Navigate back to home page with success message
-      navigate('/');
+
+      // Navigate back to home page with success message.  Removed the navigate to prevent redirect
     } catch (error) {
       console.error('Checkout error:', error);
       toast({
@@ -167,7 +166,7 @@ const Cart: React.FC = () => {
                 </table>
               </div>
             </div>
-            
+
             <div className="mt-4 flex justify-between">
               <Link to="/">
                 <Button variant="outline" className="text-kira-purple">
@@ -183,11 +182,11 @@ const Cart: React.FC = () => {
               </Button>
             </div>
           </div>
-          
+
           <div className="lg:col-span-1">
             <div className="bg-white shadow rounded-lg p-6">
               <h2 className="text-lg font-medium text-gray-900 mb-4 font-heading">Order Summary</h2>
-              
+
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Subtotal</span>
@@ -202,7 +201,7 @@ const Cart: React.FC = () => {
                   <span className="text-lg font-bold text-kira-purple">${getCartTotal().toFixed(2)}</span>
                 </div>
               </div>
-              
+
               <Button 
                 onClick={handleCheckout}
                 disabled={isPending}
