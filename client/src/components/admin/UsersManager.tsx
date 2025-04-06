@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { apiRequest } from '@/lib/utils'; // Changed import path
+import { apiRequest } from '@/lib/queryClient';
 
 interface User {
   id: number;
