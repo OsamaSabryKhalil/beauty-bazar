@@ -163,8 +163,15 @@ export default function Dashboard() {
     );
   }
 
-  // Calculate total revenue
-  const totalRevenue = dashboardData.recentOrders.reduce((sum, order) => sum + order.total, 0);
+  // Helper function to safely handle data arrays
+  const isValidArray = (arr: any): boolean => {
+    return arr && Array.isArray(arr) && arr.length > 0;
+  };
+
+  // Calculate total revenue from recent orders if available
+  const recentOrdersRevenue = isValidArray(dashboardData.recentOrders)
+    ? dashboardData.recentOrders.reduce((sum: number, order: any) => sum + (order.total || 0), 0)
+    : 0;
   
   // Calculate average order value
   const averageOrderValue = dashboardData.totalOrders 
@@ -302,22 +309,29 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {dashboardData.recentOrders.map((order) => (
-                      <tr 
-                        key={order.id} 
-                        className="bg-white border-b hover:bg-gray-50"
-                      >
-                        <td className="px-6 py-4 font-medium text-gray-900">#{order.id}</td>
-                        <td className="px-6 py-4">{order.customer}</td>
-                        <td className="px-6 py-4">{order.date}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                            {order.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">${order.total.toFixed(2)}</td>
-                      </tr>
-                    ))}
+                    {dashboardData.recentOrders && Array.isArray(dashboardData.recentOrders) ? 
+                      dashboardData.recentOrders.map((order) => (
+                        <tr 
+                          key={order.id} 
+                          className="bg-white border-b hover:bg-gray-50"
+                        >
+                          <td className="px-6 py-4 font-medium text-gray-900">#{order.id}</td>
+                          <td className="px-6 py-4">{order.customer}</td>
+                          <td className="px-6 py-4">{order.date}</td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                              {order.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">${order.total.toFixed(2)}</td>
+                        </tr>
+                      ))
+                      : (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-4 text-center text-gray-500">No recent orders to display</td>
+                        </tr>
+                      )
+                    }
                   </tbody>
                 </table>
               </div>
@@ -622,17 +636,24 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {dashboardData.recentOrders.map((order) => (
-                      <tr 
-                        key={order.id} 
-                        className="bg-white border-b hover:bg-gray-50"
-                      >
-                        <td className="px-6 py-4 font-medium text-gray-900">{order.customer}</td>
-                        <td className="px-6 py-4">{Math.floor(Math.random() * 5) + 1}</td>
-                        <td className="px-6 py-4">${(order.total * (Math.floor(Math.random() * 3) + 1)).toFixed(2)}</td>
-                        <td className="px-6 py-4">{order.date}</td>
-                      </tr>
-                    ))}
+                    {dashboardData.recentOrders && Array.isArray(dashboardData.recentOrders) ? 
+                      dashboardData.recentOrders.map((order) => (
+                        <tr 
+                          key={order.id} 
+                          className="bg-white border-b hover:bg-gray-50"
+                        >
+                          <td className="px-6 py-4 font-medium text-gray-900">{order.customer}</td>
+                          <td className="px-6 py-4">{Math.floor(Math.random() * 5) + 1}</td>
+                          <td className="px-6 py-4">${(order.total * (Math.floor(Math.random() * 3) + 1)).toFixed(2)}</td>
+                          <td className="px-6 py-4">{order.date}</td>
+                        </tr>
+                      ))
+                      : (
+                        <tr>
+                          <td colSpan={4} className="px-6 py-4 text-center text-gray-500">No recent customers to display</td>
+                        </tr>
+                      )
+                    }
                   </tbody>
                 </table>
               </div>
