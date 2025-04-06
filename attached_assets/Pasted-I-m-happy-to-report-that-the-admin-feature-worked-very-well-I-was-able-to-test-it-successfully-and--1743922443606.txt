@@ -1,0 +1,18 @@
+I’m happy to report that the admin feature worked very well—I was able to test it successfully, and it meets our needs. Now, I want to add the next feature: make the registration feature work for normal users (customers) so they can sign up on the website, and ensure their details are stored in the database. Here’s what to do:
+
+Registration Feature for Normal Users: Enable a registration system on the Kira website where normal users can create accounts. The registration form should be accessible from the login/signup page and include fields for essential information, such as:
+
+Username or email address
+Password (with confirmation)
+Optionally, additional details like name or contact information (keep it simple but user-friendly)
+The form should have a clean, inviting design that matches the current girl-friendly aesthetic, using the improved font format, soft colors (e.g., pinks, purples, pastels), and trendy styling that appeals to girls. Include clear error messages (e.g., for duplicate emails) and a success message after registration.
+
+Database Storage: Ensure that all normal user registrations are stored securely in the database you’ve already set up. The database should capture and retain each user’s details (e.g., username/email, password, and any other registered information) so they can log in later, save preferences, track orders, or leave feedback. The storage should be encrypted and protected to maintain user privacy and security.
+
+Integration with Existing Features: Link the registration feature to the existing login system, allowing registered normal users to access their "My Account" section, view products, and perform actions like saving items or submitting orders (if applicable). Ensure the registration process doesn’t affect the admin user’s access or functionality, keeping their roles separate.
+
+User Experience: Make the registration process seamless and engaging for girls, with clear instructions, a quick form, and visual feedback (e.g., loading indicators or confirmation pop-ups). The interface should be intuitive on all devices, ensuring responsiveness and mobile compatibility. Use media queries and flexible layouts to guarantee the form looks great on desktops, tablets, and smartphones, with easy navigation (e.g., a hamburger menu on smaller screens if needed).
+
+Testing: Once the registration feature is implemented, test it thoroughly to ensure normal users can sign up, their details are correctly stored in the database, and they can log in afterward. Let me know how I can test this feature myself, including any test accounts or steps to create a new normal user account.
+
+This feature should build on the success of the admin feature, keeping the Kira website functional, secure, and appealing to girls.

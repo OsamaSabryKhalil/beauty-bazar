@@ -62,13 +62,28 @@ const adminMiddleware = (req: Request, res: Response, next: NextFunction) => {
 // Auth routes
 router.post('/auth/register', async (req: Request, res: Response) => {
   try {
-    // Validate request body
-    const userData = loginUserSchema.parse(req.body);
+    // Create a registration schema
+    const registrationSchema = z.object({
+      username: z.string().min(3, "Username must be at least 3 characters"),
+      email: z.string().email("Please enter a valid email address"),
+      password: z.string().min(6, "Password must be at least 6 characters"),
+      firstName: z.string().optional(),
+      lastName: z.string().optional(),
+    });
     
-    // Check if user already exists
+    // Validate request body
+    const userData = registrationSchema.parse(req.body);
+    
+    // Check if username already exists
     const existingUser = await storage.getUserByUsername(userData.username);
     if (existingUser) {
       return res.status(400).json({ error: 'Username already exists' });
+    }
+    
+    // Check if email already exists
+    const existingEmail = await storage.getUserByEmail(userData.email);
+    if (existingEmail) {
+      return res.status(400).json({ error: 'Email already exists' });
     }
     
     // Hash password
@@ -78,10 +93,10 @@ router.post('/auth/register', async (req: Request, res: Response) => {
     const newUser = await storage.createUser({
       username: userData.username,
       password: hashedPassword,
-      email: `${userData.username}@example.com`, // Using username as email for simplicity
+      email: userData.email,
       role: "customer",
-      firstName: null,
-      lastName: null
+      firstName: userData.firstName || null,
+      lastName: userData.lastName || null
     });
     
     // Return user without password
