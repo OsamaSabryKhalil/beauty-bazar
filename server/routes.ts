@@ -310,7 +310,7 @@ router.post('/orders', authMiddleware, async (req: Request, res: Response) => {
     const orderData = {
       user_id: req.user.userId,
       status: req.body.status || "pending",
-      total_amount: req.body.totalAmount
+      total_amount: req.body.total_amount || req.body.totalAmount || 0
     };
     
     // Create order
@@ -322,11 +322,12 @@ router.post('/orders', authMiddleware, async (req: Request, res: Response) => {
         req.body.items.map(async (item: any) => {
           const orderItemData = {
             order_id: newOrder.id,
-            product_id: item.productId,
+            product_id: item.product_id || item.productId, // Support both formats
             quantity: item.quantity,
             price: item.price
           };
           
+          console.log('Creating order item:', orderItemData);
           return storage.createOrderItem(orderItemData);
         })
       );

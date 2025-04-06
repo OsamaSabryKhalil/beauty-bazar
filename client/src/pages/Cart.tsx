@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useLocation } from 'wouter';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Trash2, Plus, Minus } from 'lucide-react';
 import { Link } from 'wouter';
@@ -8,8 +11,11 @@ import { Link } from 'wouter';
 const Cart: React.FC = () => {
   const { cart, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCart();
   const { toast } = useToast();
+  const { isAuthenticated, user } = useAuth();
+  const [isPending, setIsPending] = useState(false);
+  const [, navigate] = useLocation();
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cart.length === 0) {
       toast({
         title: "Cart is empty",
@@ -18,13 +24,57 @@ const Cart: React.FC = () => {
       });
       return;
     }
+
+    // Check if user is logged in
+    if (!isAuthenticated || !user) {
+      toast({
+        title: "Login required",
+        description: "Please log in to complete your purchase",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
     
-    // For now, just show a success message - we'll implement actual checkout later
-    toast({
-      title: "Order placed successfully!",
-      description: "Thank you for your purchase",
-    });
-    clearCart();
+    try {
+      setIsPending(true);
+      
+      // Prepare order data
+      const orderData = {
+        total_amount: getCartTotal(),
+        items: cart.map(item => ({
+          product_id: item.id,
+          quantity: item.quantity,
+          price: item.price
+        }))
+      };
+      
+      // Create order in database
+      const response = await apiRequest('/orders', {
+        method: 'POST',
+        body: orderData
+      });
+      
+      toast({
+        title: "Order placed successfully!",
+        description: "Thank you for your purchase",
+      });
+      
+      // Clear cart after successful order
+      clearCart();
+      
+      // Navigate to order confirmation or account page
+      navigate('/account');
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast({
+        title: "Checkout failed",
+        description: "There was a problem processing your order. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
@@ -154,9 +204,20 @@ const Cart: React.FC = () => {
               
               <Button 
                 onClick={handleCheckout}
+                disabled={isPending}
                 className="mt-6 w-full bg-kira-coral hover:bg-opacity-90 text-white py-3"
               >
-                Checkout
+                {isPending ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  'Checkout'
+                )}
               </Button>
             </div>
           </div>
