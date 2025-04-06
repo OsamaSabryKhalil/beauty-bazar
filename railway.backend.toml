@@ -3,8 +3,11 @@
   buildCommand = "npm install && npm run build"
 
 [deploy]
-  startCommand = "NODE_ENV=production node dist/index.js"
-  healthcheckPath = "/"
+  startCommand = "NODE_ENV=production PORT=$PORT node dist/index.js"
+  healthcheckPath = "/api/health"
   healthcheckTimeout = 100
   restartPolicyType = "on_failure"
-  restartPolicyMaxRetries = 10 
+  restartPolicyMaxRetries = 10
+
+[deploy.envs]
+vars = ["DATABASE_URL", "SESSION_SECRET", "PORT"] 

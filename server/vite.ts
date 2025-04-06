@@ -10,6 +10,11 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Resolve the root directory
+const ROOT_DIR = path.resolve(__dirname, '..');
+const CLIENT_DIR = path.join(ROOT_DIR, 'client');
+const DIST_DIR = path.join(ROOT_DIR, 'dist');
+
 const viteLogger = createLogger();
 
 export function log(message: string, source = "express") {
@@ -49,12 +54,7 @@ export async function setupVite(app: Express, server: Server) {
     const url = req.originalUrl;
 
     try {
-      const clientTemplate = path.resolve(
-        __dirname,
-        "..",
-        "client",
-        "index.html",
-      );
+      const clientTemplate = path.join(CLIENT_DIR, "index.html");
 
       // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
@@ -72,18 +72,29 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(__dirname, "..", "dist");
+  try {
+    // In production, serve from the dist directory
+    const distPath = DIST_DIR;
+    
+    if (!fs.existsSync(distPath)) {
+      console.error(`Build directory not found: ${distPath}`);
+      throw new Error('Build directory not found');
+    }
 
-  if (!fs.existsSync(distPath)) {
-    throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
-    );
+    // Serve static files
+    app.use(express.static(distPath));
+
+    // Serve index.html for all routes (SPA fallback)
+    app.use("*", (_req, res) => {
+      const indexPath = path.join(distPath, "index.html");
+      if (!fs.existsSync(indexPath)) {
+        console.error(`index.html not found in: ${indexPath}`);
+        return res.status(404).send('Application not built properly');
+      }
+      res.sendFile(indexPath);
+    });
+  } catch (error) {
+    console.error('Error in serveStatic:', error);
+    throw error;
   }
-
-  app.use(express.static(distPath));
-
-  // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
-  });
 }
