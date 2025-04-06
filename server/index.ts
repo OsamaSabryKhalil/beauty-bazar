@@ -5,6 +5,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { seedAdmin } from "./auth";
 import { Router } from 'express';
 import { createServer, type Server } from "http";
+import { registerRoutes as registerAPIRoutes } from "./routes";
 
 // Initialize session store
 const MemoryStoreSession = MemoryStore(session);
@@ -66,45 +67,28 @@ app.use((req, res, next) => {
   next();
 });
 
-const router = Router();
-
-async function registerRoutes(app: express.Express): Promise<Server> {
-  app.use('/api', router);
-  const httpServer = createServer(app);
-  return httpServer;
-}
-
 (async () => {
-  const server = await registerRoutes(app);
+  // Create HTTP server
+  const server = createServer(app);
+  
+  // Register API routes
+  await registerAPIRoutes(app);
 
+  // Error handling middleware
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
     res.status(status).json({ message });
-    throw err;
+    console.error(err);
   });
 
   // Configure Vite in development mode
-  if (app.get("env") === "development") {
+  if (app.get("env") !== "production") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
-
-  // Catch all routes and forward to Vite/React
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) {
-      next();
-    } else {
-      if (app.get("env") === "development") {
-        setupVite(app, server).then(() => next());
-      } else {
-        serveStatic(app);
-        next();
-      }
-    }
-  });
 
   const port = 5000;
   server.listen({
@@ -118,27 +102,3 @@ async function registerRoutes(app: express.Express): Promise<Server> {
   seedAdmin().catch(console.error);
 })();
 
-
-// Placeholder files - these would need to be implemented in a real application
-// ./auth.ts
-export const seedAdmin = async () => {
-    console.log("Seeding admin user...");
-    // Add your database seeding logic here
-};
-
-// ./routes.ts has been moved to a separate file
-
-// ./vite.ts
-export const setupVite = async (app: any, server: any) => {
-    // Add your vite setup logic here
-    return;
-};
-
-export const serveStatic = (app: any) => {
-    // Add your static serving logic here
-    return;
-};
-
-export const log = (message: string) => {
-    console.log(message);
-};
