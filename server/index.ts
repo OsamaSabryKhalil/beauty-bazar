@@ -1,9 +1,10 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import MemoryStore from "memorystore";
-import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { seedAdmin } from "./auth"; // Added import for seedAdmin
+import { seedAdmin } from "./auth";
+import { Router } from 'express';
+import { createServer, type Server } from "http";
 
 // Initialize session store
 const MemoryStoreSession = MemoryStore(session);
@@ -65,6 +66,14 @@ app.use((req, res, next) => {
   next();
 });
 
+const router = Router();
+
+async function registerRoutes(app: express.Express): Promise<Server> {
+  app.use('/api', router);
+  const httpServer = createServer(app);
+  return httpServer;
+}
+
 (async () => {
   const server = await registerRoutes(app);
 
@@ -76,18 +85,12 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
   const port = 5000;
   server.listen({
     port,
@@ -97,8 +100,7 @@ app.use((req, res, next) => {
     log(`serving on port ${port}`);
   });
 
-  // Initialize admin user after server starts
-  seedAdmin().catch(console.error); //Added this line as instructed in changes
+  seedAdmin().catch(console.error);
 })();
 
 
@@ -110,6 +112,7 @@ export const seedAdmin = async () => {
 };
 
 // ./routes.ts
+//This file is now mostly empty because routes are defined in the main server file.
 export const registerRoutes = async (app: any) => {
     // Add your route registration logic here
     return app;
