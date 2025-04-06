@@ -118,13 +118,11 @@ export function ProfileManager() {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      // Convert to JSON string
-      const jsonBody = JSON.stringify(data);
-      
+      // Pass data directly - apiRequest will handle the JSON stringification
       return apiRequest('/user/profile', {
         method: 'PUT',
         headers,
-        body: jsonBody
+        body: data
       });
     },
     onSuccess: () => {
@@ -163,13 +161,11 @@ export function ProfileManager() {
         newPassword: data.newPassword
       };
       
-      // Convert to JSON string
-      const jsonBody = JSON.stringify(payload);
-      
+      // Pass payload directly - apiRequest will handle the JSON stringification
       return apiRequest('/user/password', {
         method: 'PUT',
         headers,
-        body: jsonBody
+        body: payload
       });
     },
     onSuccess: () => {

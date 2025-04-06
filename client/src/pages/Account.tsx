@@ -74,6 +74,7 @@ export default function Account() {
   const onProfileSubmit = async (data: ProfileFormData) => {
     setIsProfileLoading(true);
     try {
+      // Pass the profile data directly
       const response = await fetch('/user/profile', {
         method: 'PUT',
         headers: {
@@ -106,16 +107,19 @@ export default function Account() {
   const onPasswordSubmit = async (data: PasswordFormData) => {
     setIsPasswordLoading(true);
     try {
+      // Create the payload with just the needed fields
+      const payload = {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      };
+      
       const response = await fetch('/user/password', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({
-          currentPassword: data.currentPassword,
-          newPassword: data.newPassword,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
