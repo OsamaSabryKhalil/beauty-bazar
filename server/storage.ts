@@ -3,8 +3,10 @@ import {
   type Contact, type InsertContact,
   type Product, type InsertProduct,
   type Order, type InsertOrder,
-  type OrderItem, type InsertOrderItem
+  type OrderItem, type InsertOrderItem,
+  users, products, orders, orderItems, contacts
 } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 // Modify the interface with any CRUD methods you might need
 export interface IStorage {
@@ -239,11 +241,6 @@ export class MemStorage implements IStorage {
 // Import necessary modules for PostgreSQL implementation
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { neon } from '@neondatabase/serverless';
-import { eq } from 'drizzle-orm';
-// Import schema tables for database operations
-import { 
-  users, products, orders, orderItems, contacts 
-} from '@shared/schema';
 
 /**
  * PostgreSQL implementation of the storage interface
@@ -252,9 +249,14 @@ export class DbStorage implements IStorage {
   private db: any;
 
   constructor() {
-    // Connect to the database
+    // Connect to the database using the proper Neon client initialization
+    // Create a SQL executor with the DATABASE_URL
     const sql = neon(process.env.DATABASE_URL!);
+    
+    // Create a drizzle client
     this.db = drizzle(sql);
+    
+    console.log('Database connection initialized');
   }
 
   // User methods
