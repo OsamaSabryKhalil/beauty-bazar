@@ -7,9 +7,11 @@ import Home from "@/pages/Home";
 import Cart from "@/pages/Cart";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import Account from "@/pages/Account";
 import AdminDashboard from "@/pages/admin";
 import AdminProfile from "@/pages/admin/profile";
 import { CartProvider } from "@/contexts/CartContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 function Router() {
   return (
@@ -18,6 +20,7 @@ function Router() {
       <Route path="/cart" component={Cart} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/account" component={Account} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/profile" component={AdminProfile} />
       <Route component={NotFound} />
@@ -28,10 +31,12 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <CartProvider>
-        <Router />
-        <Toaster />
-      </CartProvider>
+      <AuthProvider>
+        <CartProvider>
+          <Router />
+          <Toaster />
+        </CartProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 import {
   Card,
@@ -25,12 +26,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { LoaderIcon } from 'lucide-react';
 
-// Define registration schema
+// Registration schema with validation rules
 const registerSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string().min(6, "Confirm password must be at least 6 characters"),
+  username: z.string().min(3, 'Username must be at least 3 characters'),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -43,6 +44,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 export default function Register() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<RegisterFormData>({
@@ -61,15 +63,15 @@ export default function Register() {
     setIsLoading(true);
     
     try {
-      // Remove confirmPassword before sending to the API
-      const { confirmPassword, ...registrationData } = data;
+      // Remove confirmPassword field before sending to API
+      const { confirmPassword, ...registerData } = data;
       
       const response = await fetch('/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(registrationData),
+        body: JSON.stringify(registerData),
       });
       
       if (!response.ok) {
@@ -77,14 +79,17 @@ export default function Register() {
         throw new Error(errorData.error || 'Registration failed');
       }
       
-      // Registration successful
+      const result = await response.json();
+      
+      // Auto login after successful registration
+      login(result.token, result.user);
+      
       toast({
         title: "Registration Successful",
-        description: "Your account has been created! You can now log in.",
+        description: "Your account has been created successfully!",
       });
       
-      // Redirect to login page
-      setLocation('/login');
+      setLocation('/');
     } catch (error) {
       toast({
         title: "Registration Failed",
@@ -97,12 +102,12 @@ export default function Register() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50 px-4">
+    <div className="flex justify-center items-center min-h-screen bg-gray-50 px-4 py-10">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-pink-600">Create an Account</CardTitle>
           <CardDescription>
-            Join Kira to discover premium hair care products
+            Join Kira and discover our premium beauty products
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -116,7 +121,7 @@ export default function Register() {
                     <FormItem>
                       <FormLabel>First Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your first name" {...field} />
+                        <Input placeholder="Your first name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -129,7 +134,7 @@ export default function Register() {
                     <FormItem>
                       <FormLabel>Last Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your last name" {...field} />
+                        <Input placeholder="Your last name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -156,7 +161,7 @@ export default function Register() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="your.email@example.com" {...field} />
+                      <Input type="email" placeholder="Your email address" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -169,7 +174,7 @@ export default function Register() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
+                      <Input type="password" placeholder="Create a password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -182,7 +187,7 @@ export default function Register() {
                   <FormItem>
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
+                      <Input type="password" placeholder="Confirm your password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -192,7 +197,7 @@ export default function Register() {
                 {isLoading ? (
                   <>
                     <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
+                    Creating Account...
                   </>
                 ) : (
                   'Register'
@@ -201,7 +206,7 @@ export default function Register() {
             </form>
           </Form>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-2">
+        <CardFooter className="flex justify-center">
           <div className="text-sm text-center text-gray-500">
             Already have an account?
             <Button 

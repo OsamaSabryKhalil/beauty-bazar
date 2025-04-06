@@ -1,0 +1,21 @@
+I want to improve the user experience for normal users on the Kira website by editing how they interact with the site. Here’s the desired flow and changes:
+
+Initial Experience for Normal Users: When a normal user opens the site, they should see a prominent "Login" tab or button (e.g., in the navigation bar or hero section). This should be clear, visually appealing, and consistent with the current girl-friendly design, using the improved font format and soft colors (e.g., pinks, purples, pastels) that appeal to girls.
+
+Registration Process: If the user clicks the "Login" tab but doesn’t have an account, they should be directed to a "Register" option or page. The registration form should allow them to sign up by entering details like username or email address, password (with confirmation), and optionally other basic information (e.g., name). The form should be simple, engaging, and easy to use, with clear instructions and feedback (e.g., success messages or error notifications for duplicate emails). Ensure this process is stored in the database as previously set up, and the design remains responsive and mobile-compatible across all devices.
+
+Post-Login Experience: Once a normal user successfully logs in (either by registering or using existing credentials), the "Login" tab or button should no longer appear. Instead, replace it with an "Account" tab or link in the navigation bar. Clicking this should take the user to a dedicated "Manage Account" page where they can:
+
+View and edit their profile details (e.g., username, email, password).
+Check their order history or saved products (if applicable).
+Leave feedback or update preferences.
+Log out of their account.
+The "Manage Account" page should have a clean, user-friendly design that matches the girl-friendly aesthetic, with intuitive navigation, clear sections, and buttons or links for each action. Ensure this page is fully responsive and mobile-compatible, adjusting seamlessly to different screen sizes (desktops, tablets, smartphones) with flexible layouts and clear typography.
+
+Design Consistency: Keep the updated user experience consistent with the current design, ensuring all new elements (like the "Account" tab and "Manage Account" page) use the same improved font, color scheme, and styling. The transition from login to account management should feel smooth and natural for girls, avoiding any confusion or redundancy (e.g., no longer showing the "Login" tab after login).
+
+Technical Adjustments: Update the front-end and back-end to reflect this flow. Ensure the database tracks whether a user is logged in and adjusts the navigation dynamically (e.g., showing "Login" for unauthenticated users and "Account" for logged-in users). Use JavaScript or similar to handle this logic, keeping it simple but effective.
+
+Testing: Once this update is complete, test the new user experience thoroughly. Let me know how I can test it myself, including steps to simulate a new user opening the site, registering, logging in, and accessing the "Manage Account" page. Ensure everything works smoothly on all devices and that the database correctly stores and retrieves user data.
+
+This change will make the site more logical and user-friendly for normal users, enhancing their engagement while maintaining the site’s appeal to girls.

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { loginUserSchema } from '@shared/schema';
 
 import {
@@ -31,6 +32,7 @@ type LoginFormData = z.infer<typeof loginUserSchema>;
 export default function Login() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { login: authLogin, isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<LoginFormData>({
@@ -60,8 +62,8 @@ export default function Login() {
       
       const result = await response.json();
       
-      // Save token to localStorage
-      localStorage.setItem('token', result.token);
+      // Use our auth context to login
+      authLogin(result.token, result.user);
       
       // Redirect based on role
       if (result.user.role === 'admin') {

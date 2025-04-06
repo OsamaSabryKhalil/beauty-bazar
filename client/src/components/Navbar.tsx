@@ -1,14 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import CartIcon from '@/components/CartIcon';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
+import { useAuth } from '@/contexts/AuthContext';
+import { 
+  LogOut, 
+  User, 
+  ShoppingBag, 
+  Settings
+} from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const { isAuthenticated, user, logout, isAdmin } = useAuth();
+  const [, navigate] = useLocation();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+  
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+    setIsMenuOpen(false);
   };
 
   const handleScroll = () => {
@@ -63,9 +78,38 @@ const Navbar: React.FC = () => {
                 {link.name}
               </a>
             ))}
-            <Link to="/login" className="nav-link font-heading text-kira-purple hover:text-kira-coral">
-              Login
-            </Link>
+            
+            {isAuthenticated ? (
+              <>
+                <Link 
+                  to="/account" 
+                  className="nav-link font-heading text-kira-purple hover:text-kira-coral flex items-center"
+                >
+                  <User className="w-4 h-4 mr-1" /> Account
+                </Link>
+                
+                {isAdmin && (
+                  <Link 
+                    to="/admin" 
+                    className="nav-link font-heading text-kira-purple hover:text-kira-coral flex items-center"
+                  >
+                    <Settings className="w-4 h-4 mr-1" /> Admin
+                  </Link>
+                )}
+                
+                <button 
+                  onClick={handleLogout}
+                  className="nav-link font-heading text-kira-purple hover:text-kira-coral flex items-center"
+                >
+                  <LogOut className="w-4 h-4 mr-1" /> Logout
+                </button>
+              </>
+            ) : (
+              <Link to="/login" className="nav-link font-heading text-kira-purple hover:text-kira-coral flex items-center">
+                <User className="w-4 h-4 mr-1" /> Login
+              </Link>
+            )}
+            
             <CartIcon />
           </div>
           
@@ -97,13 +141,43 @@ const Navbar: React.FC = () => {
                 {link.name}
               </a>
             ))}
-            <Link 
-              to="/login" 
-              className="block py-2 px-4 font-heading font-medium text-kira-purple hover:text-kira-coral hover:bg-kira-light rounded-lg transition-colors"
-              onClick={handleNavLinkClick}
-            >
-              Login
-            </Link>
+            
+            {isAuthenticated ? (
+              <>
+                <Link 
+                  to="/account" 
+                  className="block py-2 px-4 font-heading font-medium text-kira-purple hover:text-kira-coral hover:bg-kira-light rounded-lg transition-colors flex items-center"
+                  onClick={handleNavLinkClick}
+                >
+                  <User className="w-4 h-4 mr-2" /> My Account
+                </Link>
+                
+                {isAdmin && (
+                  <Link 
+                    to="/admin" 
+                    className="block py-2 px-4 font-heading font-medium text-kira-purple hover:text-kira-coral hover:bg-kira-light rounded-lg transition-colors flex items-center"
+                    onClick={handleNavLinkClick}
+                  >
+                    <Settings className="w-4 h-4 mr-2" /> Admin Dashboard
+                  </Link>
+                )}
+                
+                <button
+                  onClick={handleLogout}
+                  className="block w-full text-left py-2 px-4 font-heading font-medium text-kira-purple hover:text-kira-coral hover:bg-kira-light rounded-lg transition-colors flex items-center"
+                >
+                  <LogOut className="w-4 h-4 mr-2" /> Logout
+                </button>
+              </>
+            ) : (
+              <Link 
+                to="/login" 
+                className="block py-2 px-4 font-heading font-medium text-kira-purple hover:text-kira-coral hover:bg-kira-light rounded-lg transition-colors flex items-center"
+                onClick={handleNavLinkClick}
+              >
+                <User className="w-4 h-4 mr-2" /> Login
+              </Link>
+            )}
           </div>
         </div>
       </div>
