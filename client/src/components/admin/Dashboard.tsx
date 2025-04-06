@@ -69,14 +69,17 @@ export default function Dashboard() {
     queryFn: async () => {
       try {
         const response = await apiRequest<DashboardData>('/api/admin/dashboard');
+        console.log('Dashboard data loaded:', response);
         return response;
       } catch (error) {
+        console.error('Error loading dashboard data:', error);
         toast({
           title: 'Error',
-          description: 'Failed to load dashboard data',
+          description: 'Failed to load dashboard data. Please make sure you are logged in as admin.',
           variant: 'destructive',
         });
-        return null;
+        // Don't return null to allow proper error handling
+        throw error;
       }
     }
   });

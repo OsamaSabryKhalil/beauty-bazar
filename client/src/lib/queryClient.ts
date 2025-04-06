@@ -22,6 +22,12 @@ export async function apiRequest<T = any>(
     ...(options?.headers || {})
   } as Record<string, string>;
 
+  // Add authentication token to every request if available
+  const token = localStorage.getItem('token');
+  if (token && !headers['Authorization']) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   if (options?.body && !headers['Content-Type'] && !(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }
@@ -64,8 +70,17 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // Add authentication token to headers if available
+    const headers: Record<string, string> = {};
+    const token = localStorage.getItem('token');
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
+      headers
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
